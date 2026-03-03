@@ -138,9 +138,9 @@ class Maze():
     def connect(self, origin: Cell, destination: Cell) -> None:
 
         if destination.row > origin.row:
-            origin.open_wall(Wall.S)
-        elif destination.row < origin.row:
             origin.open_wall(Wall.N)
+        elif destination.row < origin.row:
+            origin.open_wall(Wall.S)
         elif destination.col > origin.col:
             origin.open_wall(Wall.E)
         elif destination.col < origin.col:
@@ -155,7 +155,6 @@ class Maze():
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
-            self.connect(cell, dest)
             self.explore(dest)
 
     def do_perfect(self):
@@ -205,6 +204,6 @@ def abrecierra(maze: Maze, row: int, col: int):
 # mz.show()
 # abrecierra(mz, 4, 4)
 
-mz = Maze(50, 50)
+mz = Maze(5, 5)
 mz.show()
 mz.do_perfect()
