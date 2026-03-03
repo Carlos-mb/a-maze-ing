@@ -83,7 +83,9 @@ class Cell():
 
     def open_wall(self, wall: int) -> None:
 
-        self.walls &= ~wall  # Open the wall (and not wall.X)
+        self.walls &= ~wall  # Open the wall --> (and not wall.X)
+
+        # PENDING. //\\ Do not open when it's the maze limit.
 
         neighbor_row = self.row + Cell.relative[wall][0]
         neighbor_col = self.col + Cell.relative[wall][1]
@@ -106,50 +108,23 @@ class Maze():
 
     def show(self):
 
-        print("|" + "-----" * self.cols + "|")
+        print(" " + "__" * (self.cols - 1) + "_")
 
         for r in range(self.rows):
-
-            line = "|"
-            for c in range(self.cols):
-                line += "+"
-                cell: Cell = self.matrix[r][c]
-                if cell.walls & Wall.N:  # I'll see double walls, for check
-                    line += "---"
-                else:
-                    line += "   "
-                line += "+"
-            line += "|"
-            print(line) 
-
             line = "|"
             for c in range(self.cols):
                 cell: Cell = self.matrix[r][c]
-                if cell.walls & Wall.W:  # I'll see double walls, for check
-                    line += "|"
+                if cell.walls & Wall.S:
+                    line += "_"
                 else:
                     line += " "
-                line += "   "
                 if cell.walls & Wall.E:
                     line += "|"
                 else:
                     line += " "
-            line += "|"
             print(line)
 
-            line = "|"
-            for c in range(self.cols):
-                line += "+"
-                cell: Cell = self.matrix[r][c]
-                if cell.walls & Wall.S:  # I'll see double walls, for check
-                    line += "---"
-                else:
-                    line += "   "
-                line += "+"
-            line += "|"
-            print(line)
-
-        print("|" + "-----" * self.cols + "|")
+        print(" " + "__" * (self.cols - 1) + "_")
 
     def cell_exist(self, row: int, col: int):
         return (row >= 0 and col >= 0 and row < self.rows and col < self.cols)
@@ -187,18 +162,14 @@ def abrecierra(maze: Maze, row: int, col: int):
     my_cell.open_wall(Wall.W)
     maze.show()
 
-
-
-
-mz = Maze(3, 3)
+mz = Maze(5, 5)
 mz.show()
-# pruebavecinos(mz, 0, 0)
-# pruebavecinos(mz, 2, 2)
-# pruebavecinos(mz, 4, 4)
-
-# abrecierra(mz, 0, 0)
-
 abrecierra(mz, 2, 2)
 mz = Maze(3, 3)
 abrecierra(mz, 1, 1)
-# abrecierra(mz, 4, 4)
+mz = Maze(5, 5)
+mz.show()
+abrecierra(mz, 4, 4)
+mz = Maze(20, 20)
+mz.show()
+abrecierra(mz, 4, 4)
