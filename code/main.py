@@ -1,5 +1,6 @@
 from enum import IntFlag
 from random import Random
+import time
 
 
 class Wall(IntFlag):
@@ -68,6 +69,7 @@ class Cell():
         self.walls: int = Wall.N | Wall.E | Wall.S | Wall.W
 
     def get_neighbors(self) -> list["Cell"]:
+        """Get NON VISITED neighbors"""
         neighbors: list["Cell"] = []
         matrix = self.maze.matrix
 
@@ -158,23 +160,26 @@ class Maze():
             self.connect(cell, dest)
             self.explore(dest)
 
+    def pending_neighbors(self):
+        notvisited = set()
+        for row in self.matrix:
+            for cell in row:
+                # If cell is visited and had no visited neighbors
+                if cell.visited:
+                    if len(cell.get_neighbors()) > 0:
+                        notvisited.add(cell)                    
+        return list(notvisited)
+
+
     def do_perfect(self):
         start = self.matrix[0][0]
         self.explore(start)
 
-
-def pruebavecinos(maze, row, col):
-    m = maze.matrix
-    print(f"\nVecinos de {row} - {col}")
-    print("Celda:" + str(m[row][col].row) + " - " + str(m[row][col].col))
-
-    for row in [m[row][col].get_neighbors()]:
-        print("vecinos ", end="")
-        for cell in row:
-            print(f"[{cell.row}"
-                  f"{"X" if cell.visited else "-"}{cell.col}]", end="")
-        print()
-
+        while any(not cell.visited for row in self.matrix for cell in row):
+            time.sleep(0.1)
+            pendings = self.pending_neighbors()
+            self.explore(self.rnd.choice(pendings))
+            # self.explore(self.rnd.choice([self.pending_neighbors()]))
 
 def abrecierra(maze: Maze, row: int, col: int):
 
@@ -205,6 +210,6 @@ def abrecierra(maze: Maze, row: int, col: int):
 # mz.show()
 # abrecierra(mz, 4, 4)
 
-mz = Maze(50, 50)
+mz = Maze(20, 20)
 mz.show()
 mz.do_perfect()
