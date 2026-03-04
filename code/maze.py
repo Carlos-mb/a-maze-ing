@@ -2,6 +2,7 @@ from enum import IntFlag
 import random
 import os
 import time
+import collections
 
 
 class Wall(IntFlag):
@@ -51,6 +52,8 @@ class Cell():
         Wall.W: (0, -1)
         }
 
+    
+    # List of oposite walls to simplify open neighbor's walls
     oposite_wall: dict[int, int] = {
         Wall.N: Wall.S,
         Wall.E: Wall.W,
@@ -69,7 +72,7 @@ class Cell():
         # Walls. Byte OR of 0001, 0010, 0100 and 1000
         self.walls: int = Wall.N | Wall.E | Wall.S | Wall.W
 
-    def get_neighbors(self) -> list["Cell"]:
+    def notvisited(self) -> list["Cell"]:
         """Get NON VISITED neighbors"""
         neighbors: list["Cell"] = []
         matrix = self.maze.matrix
@@ -91,16 +94,44 @@ class Cell():
 
     def open_wall(self, wall: int) -> None:
 
-        self.walls &= ~wall  # Open the wall doing "and not wall.X")
-
-        # PENDING. //\\ Do not open when it's the maze limit.
-
+        # Get the neighbor coordinates using the wall position
         neighbor_row = self.row + Cell.relative[wall][0]
         neighbor_col = self.col + Cell.relative[wall][1]
 
+        # If not in the limits
         if (self.maze.cell_exist(neighbor_row, neighbor_col)):
+            
+            # Open my wall
+            self.walls &= ~wall  # Open the wall doing "and not wall.X")     
+
+            # Open neighbor's wall
             self.maze.matrix[neighbor_row][neighbor_col].walls\
                 &= ~self.oposite_wall[wall]
+
+    def able_neighbors(self) -> list["Cell"]:
+        """Get able neighbors (with open walls)"""
+
+        neighbors: list["Cell"] = []
+        matrix = self.maze.matrix
+
+        # walls = 0101
+        # N     = 0001
+        # walls & N == wall exist
+
+        if (self.row > 0) and not (self.walls & Wall.N):
+            if not matrix[self.row - 1][self.col].visited:
+                neighbors.append(matrix[self.row - 1][self.col])
+        if (self.row < self.maze.rows - 1) and not (self.walls & Wall.S):
+            if not matrix[self.row + 1][self.col].visited:
+                neighbors.append(matrix[self.row + 1][self.col])
+        if (self.col > 0) and not (self.walls & Wall.W):
+            if not matrix[self.row][self.col - 1].visited:
+                neighbors.append(matrix[self.row][self.col - 1])
+        if (self.col < self.maze.cols - 1) and not (self.walls & Wall.E):
+            if not matrix[self.row][self.col + 1].visited:
+                neighbors.append(matrix[self.row][self.col + 1])
+
+        return neighbors
 
 
 class Maze():
@@ -117,26 +148,51 @@ class Maze():
               for col in range(cols)]
                 for row in range(rows)])
         self.showdraw = False
+        self.shortest_path: list[Cell] = []
 
-    def draw(self):
+    def draw(self, pos: Cell | None = None, path: list = []):
 
-        print(" " + "__" * (self.cols - 1) + "_")
+        line = "+"
+        for _ in range(self.cols):
+            line += "---+"
+        print(line)
 
         for r in range(self.rows):
+
+            # interior line
             line = "|"
             for c in range(self.cols):
-                cell: Cell = self.matrix[r][c]
-                if cell.walls & Wall.S:
-                    line += "_"
+
+                cell = self.matrix[r][c]
+
+                if cell == pos:
+                    content = " X "
+                elif cell in path:
+                    content = " . "
                 else:
-                    line += " "
+                    content = "   "
+
+                line += content
+
                 if cell.walls & Wall.E:
                     line += "|"
                 else:
                     line += " "
+
             print(line)
 
-        print(" " + "__" * (self.cols - 1) + "_")
+            # floor lines
+            line = "+"
+            for c in range(self.cols):
+
+                cell = self.matrix[r][c]
+
+                if cell.walls & Wall.S:
+                    line += "---+"
+                else:
+                    line += "   +"
+
+            print(line)
 
     def cell_exist(self, row: int, col: int):
         return (row >= 0 and col >= 0 and row < self.rows and col < self.cols)
@@ -154,52 +210,48 @@ class Maze():
         else:
             raise ValueError("Cells are not adjacent")
 
-    def explore(self, cell: Cell):
+    def tunnel(self, cell: Cell):
         cell.visited = True
-        neighbors = cell.get_neighbors()
+        neighbors = cell.notvisited()
 
         if self.showdraw:
             os.system("clear")
             self.draw()
-            time.sleep(0.01)
+            time.sleep(0.001)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
             self.connect(cell, dest)
-            self.explore(dest)
+            self.tunnel(dest)
 
     def pending_neighbors(self):
 
-        # Cant use set() because I need same order for the same seed and Set
-        # is unshorted
         notvisited = []
         for row in self.matrix:
             for cell in row:
                 # If cell is visited and had no visited neighbors
                 if cell.visited:
-                    if len(cell.get_neighbors()) > 0:
+                    if len(cell.notvisited()) > 0:
                         notvisited.append(cell)
         return list(notvisited)
 
     def unperfect(self):
-        count = 0
-        while count < len(self.matrix) / 3:
-            row = random.choice(self.matrix[1:-1])
-            cell: Cell = random.choice(row[1:-1])
-            walls = cell.walls
-            cell.open_wall(random.choice([Wall.N, Wall.E, Wall.S, Wall.W]))
-            if walls != cell.walls:
-                count = count + 1
-                print(cell.row, cell.col)
+        # Enumarete generates a tupla of pairs [0, value1], [1, value2]
+        for i, row in enumerate(self.matrix[1:-1]):
+            if i % 2 == 0:
+                cell: Cell = self.rnd.choice(row[1:-1])
+                closed = [wall for wall in Wall if cell.walls & wall]
+                if closed:
+                    cell.open_wall(self.rnd.choice(closed))
 
     def do_perfect(self):
         start = self.matrix[0][0]
-        self.explore(start)
+        self.tunnel(start)
 
         while any(not cell.visited for row in self.matrix for cell in row):            
             pendings = self.pending_neighbors()
-            self.explore(self.rnd.choice(pendings))
-            # self.explore(self.rnd.choice([self.pending_neighbors()]))
+            self.tunnel(self.rnd.choice(pendings))
+            # self.tunnel(self.rnd.choice([self.pending_neighbors()]))
 
     def redo(self) -> None:
         self.rnd = random.Random()
@@ -210,3 +262,52 @@ class Maze():
         self.do_perfect()
         if not self.perfect:
             self.unperfect()
+
+    def explore(self, cell: Cell,
+                end: tuple[int, int]
+                ) -> None:
+
+        parents: dict[Cell, Cell | None] = {}
+        queue = collections.deque()
+
+        queue.append(cell)
+        cell.visited = True
+
+        while queue:
+            if self.showdraw:
+                os.system("clear")
+                self.draw(cell)
+                time.sleep(0.1)
+
+            cell = queue.popleft()
+            neighbors: list[Cell] = cell.able_neighbors()
+            if neighbors:
+                for next in neighbors:
+                    queue.append(next)
+                    next.visited = True
+                    parents[next] = cell
+                    if next == self.matrix[end[0]][end[1]]:
+                        cell = next
+                        queue = None
+                        break
+
+        path = [cell]
+        while parents.get(cell, False):
+            path.append(parents[cell])
+            cell = parents[cell]
+
+        self.draw(path=path)
+
+    def get_path(self,
+                 start: tuple[int, int],
+                 end: tuple[int, int]
+                 ) -> None:
+
+        for row in self.matrix:
+            for cell in row:
+                cell.visited = False
+
+        self.explore(self.matrix[start[0]][start[1]], end)
+        # for cell in path:
+        #     print(cell)
+

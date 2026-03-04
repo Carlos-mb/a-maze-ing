@@ -3,7 +3,8 @@ from renderer import Renderer
 import sys
 
 
-def read_config() -> dict[str, str | int] | None:
+
+def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
     output: dict = {}
 
@@ -55,8 +56,19 @@ def read_config() -> dict[str, str | int] | None:
         #    output["ENTRY"][1] == output["EXIT"][1]:
         #     raise ValueError("Error: ENTRY and EXIT must be different points")
 
-        output["OUTPUT_FILE"] = output.get("HEIGHT", "maze.txt")
-        output["PERFECT"] = bool(output.get("PERFECT", "True"))
+        output["OUTPUT_FILE"] = output.get("OUTPUT_FILE", "maze.txt")
+
+        output["PERFECT"] = output.get("PERFECT", "true").lower()
+        if output["PERFECT"] not in ("true", "false"):
+            raise ValueError("Error: PERFECT should be true | false")
+        output["PERFECT"] = output["PERFECT"] == "true"
+
+        output["SHOWDRAW"] = output.get("SHOWDRAW", "true").lower()
+        if output["SHOWDRAW"] not in ("true", "false"):
+            raise ValueError("Error: SHOWDRAW should be true | false")
+        output["SHOWDRAW"] = output["SHOWDRAW"] == "true"
+
+
         output["SEED"] = int(output.get("SEED", "94"))
 
     except ValueError as e:
@@ -68,23 +80,24 @@ def read_config() -> dict[str, str | int] | None:
 
 def main():
 
-    config: dict[str, str | int] | None = read_config()
+    config: dict[str, str | int | tuple[int, int]] | None = read_config()
     if config is None:
         return
 
     mz = Maze(config["WIDTH"],
               config["HEIGHT"],
               config["SEED"])
-    mz.showdraw = False
+    mz.showdraw = config["SHOWDRAW"]
     mz.do_perfect()
     mz.draw()
-    mz.unperfect()
-    mz.draw()
-    # if not mz.showdraw:
+    mz.get_path(config["ENTRY"], config["EXIT"])
+    # mz.unperfect()
+    # mz.draw()
+    # mz.get_path(config["ENTRY"], config["EXIT"])
+    # # if not mz.showdraw:
     #     mz.draw()
     # render = Renderer(mz)
     # render.render()
-
 
 
 if __name__ == "__main__":

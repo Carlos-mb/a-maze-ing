@@ -1,3 +1,99 @@
+==> a_maze_ing.py <==
+from maze import Maze
+from renderer import Renderer
+import sys
+
+
+def read_config() -> dict[str, str | int] | None:
+
+    output: dict = {}
+
+    if len(sys.argv) != 2:
+        print("Usage: python3 a_maze_ing.py config.txt")
+        return None
+
+    try:
+        with open(sys.argv[1]) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    output[key.strip()] = value.strip()
+
+    except FileNotFoundError:
+        print("ERROR: config file does not exist")
+        return None
+    except Exception:
+        print("Undefined error. Usage: python3 a_maze_ing.py config.txt")
+        return None
+
+    try:
+        output["WIDTH"] = int(output.get("WIDTH", "20"))
+        output["HEIGHT"] = int(output.get("HEIGHT", "20"))
+        output["ENTRY"] = tuple(map(
+                                int, output.get("ENTRY", "0,0").split(",")))
+        if len(output["ENTRY"]) != 2:
+            raise ValueError("Error: ENTRY must be int, int")
+
+        if output["ENTRY"][0] < 0 or output["ENTRY"][1] < 0 or\
+           output["ENTRY"][0] > output["WIDTH"] - 1 or\
+           output["ENTRY"][1] > output["HEIGHT"] - 1:
+
+            raise ValueError("Error: ENTRY must be inside maze limits")
+
+        output["EXIT"] = tuple(map(int, output.get("EXIT", "0,0").split(",")))
+        if len(output["EXIT"]) != 2:
+            raise ValueError("Error: EXIT must be int, int")
+
+        if output["EXIT"][0] < 0 or output["EXIT"][1] < 0 or\
+           output["EXIT"][0] > output["WIDTH"] - 1 or\
+           output["EXIT"][1] > output["HEIGHT"] - 1:
+
+            raise ValueError("Error: EXIT must be inside maze limits")
+
+        # Not sure of this:
+        # if output["ENTRY"][0] == output["EXIT"][0] and\
+        #    output["ENTRY"][1] == output["EXIT"][1]:
+        #     raise ValueError("Error: ENTRY and EXIT must be different points")
+
+        output["OUTPUT_FILE"] = output.get("HEIGHT", "maze.txt")
+        output["PERFECT"] = bool(output.get("PERFECT", "True"))
+        output["SEED"] = int(output.get("SEED", "94"))
+
+    except ValueError as e:
+        print(e)
+        return None
+
+    return output
+
+
+def main():
+
+    config: dict[str, str | int] | None = read_config()
+    if config is None:
+        return
+
+    mz = Maze(config["WIDTH"],
+              config["HEIGHT"],
+              config["SEED"])
+    mz.showdraw = False
+    mz.do_perfect()
+    mz.draw()
+    mz.unperfect()
+    mz.draw()
+    # if not mz.showdraw:
+    #     mz.draw()
+    # render = Renderer(mz)
+    # render.render()
+
+
+
+if __name__ == "__main__":
+    main()
+
+==> config.py <==
+
+==> maze.py <==
 from enum import IntFlag
 import random
 import os
@@ -51,8 +147,6 @@ class Cell():
         Wall.W: (0, -1)
         }
 
-    
-    # List of oposite walls to simplify open neighbor's walls
     oposite_wall: dict[int, int] = {
         Wall.N: Wall.S,
         Wall.E: Wall.W,
@@ -71,7 +165,7 @@ class Cell():
         # Walls. Byte OR of 0001, 0010, 0100 and 1000
         self.walls: int = Wall.N | Wall.E | Wall.S | Wall.W
 
-    def notvisited(self) -> list["Cell"]:
+    def get_neighbors(self) -> list["Cell"]:
         """Get NON VISITED neighbors"""
         neighbors: list["Cell"] = []
         matrix = self.maze.matrix
@@ -93,40 +187,16 @@ class Cell():
 
     def open_wall(self, wall: int) -> None:
 
-        # Get the neighbor coordinates using the wall position
+        self.walls &= ~wall  # Open the wall doing "and not wall.X")
+
+        # PENDING. //\\ Do not open when it's the maze limit.
+
         neighbor_row = self.row + Cell.relative[wall][0]
         neighbor_col = self.col + Cell.relative[wall][1]
 
-        # If not in the limits
         if (self.maze.cell_exist(neighbor_row, neighbor_col)):
-            
-            # Open my wall
-            self.walls &= ~wall  # Open the wall doing "and not wall.X")     
-
-            # Open neighbor's wall
             self.maze.matrix[neighbor_row][neighbor_col].walls\
                 &= ~self.oposite_wall[wall]
-
-    def able_neighbors(self) -> list["Cell"]:
-        """Get able neighbors (with open walls)"""
-
-        neighbors: list["Cell"] = []
-        matrix = self.maze.matrix
-
-        # walls = 0101
-        # N     = 0001
-        # walls & N == wall exist
-
-        if (self.row > 0) and not (self.walls & Wall.N):
-            neighbors.append(matrix[self.row - 1][self.col])
-        if (self.row < self.maze.rows - 1) and not (self.walls & Wall.S):
-            neighbors.append(matrix[self.row + 1][self.col])
-        if (self.col > 0) and not (self.walls & Wall.W):
-            neighbors.append(matrix[self.row][self.col - 1])
-        if (self.col < self.maze.cols - 1) and not (self.walls & Wall.E):
-            neighbors.append(matrix[self.row][self.col + 1])        
-
-        return neighbors
 
 
 class Maze():
@@ -162,6 +232,8 @@ class Maze():
                     line += "_"
             print(line)
 
+        # print(" " + "__" * (self.cols - 1) + "_")
+
     def cell_exist(self, row: int, col: int):
         return (row >= 0 and col >= 0 and row < self.rows and col < self.cols)
 
@@ -180,7 +252,7 @@ class Maze():
 
     def explore(self, cell: Cell):
         cell.visited = True
-        neighbors = cell.notvisited()
+        neighbors = cell.get_neighbors()
 
         if self.showdraw:
             os.system("clear")
@@ -201,7 +273,7 @@ class Maze():
             for cell in row:
                 # If cell is visited and had no visited neighbors
                 if cell.visited:
-                    if len(cell.notvisited()) > 0:
+                    if len(cell.get_neighbors()) > 0:
                         notvisited.append(cell)
         return list(notvisited)
 
@@ -233,11 +305,32 @@ class Maze():
         if not self.perfect:
             self.unperfect()
 
-    def shortest_path(self, 
-                      start: tuple[int, int],
-                      end: tuple[int, int]
-                      ) -> None:
+==> renderer.py <==
+import maze
+import os
+import random
 
-        for row in self.matrix:
-            for cell in row:
-                cell.visited = False
+
+class Renderer():
+
+    def __init__(self, maze: maze.Maze, ascii: bool = True):
+        self.ascii = ascii
+        self.maze = maze
+
+    def __render_ascii__(self):
+        while True:
+            os.system("clear")
+            self.maze.draw()
+
+            cmd = input("[r] regenerate  [p] path  [q] quit: ")
+
+            if cmd == "q":
+                break
+            elif cmd == "r":
+                self.maze.redo()
+            elif cmd == "p":
+                self.show_path = not self.show_path
+
+    def render(self) -> None:
+        if ascii:
+            self.__render_ascii__()
