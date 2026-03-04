@@ -217,7 +217,7 @@ class Maze():
         if self.showdraw:
             os.system("clear")
             self.draw()
-            time.sleep(0.001)
+            time.sleep(0.1)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
