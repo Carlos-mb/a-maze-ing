@@ -1,5 +1,6 @@
 from enum import IntFlag
-from random import Random
+import random
+import os
 import time
 
 
@@ -90,7 +91,7 @@ class Cell():
 
     def open_wall(self, wall: int) -> None:
 
-        self.walls &= ~wall  # Open the wall --> (and not wall.X)
+        self.walls &= ~wall  # Open the wall doing "and not wall.X")
 
         # PENDING. //\\ Do not open when it's the maze limit.
 
@@ -104,17 +105,20 @@ class Cell():
 
 class Maze():
 
-    def __init__(self, rows: int, cols: int, seed: int = 94):
+    def __init__(self, rows: int, cols: int,
+                 seed: int = 94, perfect: bool = True):
 
         self.rows = rows
         self.cols = cols
-        self.rnd = Random(seed)
+        self.rnd = random.Random(seed)
+        self.perfect = perfect
         self.matrix: list[list] = (
             [[Cell(row=row, col=col, maze=self)
               for col in range(cols)]
                 for row in range(rows)])
+        self.showdraw = False
 
-    def show(self):
+    def draw(self):
 
         print(" " + "__" * (self.cols - 1) + "_")
 
@@ -153,7 +157,11 @@ class Maze():
     def explore(self, cell: Cell):
         cell.visited = True
         neighbors = cell.get_neighbors()
-        self.show()
+
+        if self.showdraw:
+            os.system("clear")
+            self.draw()
+            time.sleep(0.01)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
@@ -161,55 +169,44 @@ class Maze():
             self.explore(dest)
 
     def pending_neighbors(self):
-        notvisited = set()
+
+        # Cant use set() because I need same order for the same seed and Set
+        # is unshorted
+        notvisited = []
         for row in self.matrix:
             for cell in row:
                 # If cell is visited and had no visited neighbors
                 if cell.visited:
                     if len(cell.get_neighbors()) > 0:
-                        notvisited.add(cell)                    
+                        notvisited.append(cell)
         return list(notvisited)
 
+    def unperfect(self):
+        count = 0
+        while count < len(self.matrix) / 3:
+            row = random.choice(self.matrix[1:-1])
+            cell: Cell = random.choice(row[1:-1])
+            walls = cell.walls
+            cell.open_wall(random.choice([Wall.N, Wall.E, Wall.S, Wall.W]))
+            if walls != cell.walls:
+                count = count + 1
+                print(cell.row, cell.col)
 
     def do_perfect(self):
         start = self.matrix[0][0]
         self.explore(start)
 
-        while any(not cell.visited for row in self.matrix for cell in row):
-            time.sleep(0.1)
+        while any(not cell.visited for row in self.matrix for cell in row):            
             pendings = self.pending_neighbors()
             self.explore(self.rnd.choice(pendings))
             # self.explore(self.rnd.choice([self.pending_neighbors()]))
 
-def abrecierra(maze: Maze, row: int, col: int):
-
-    my_cell: Cell = maze.matrix[row][col]
-    print("="*20 + "Abre-Cierra" + "="*20)
-    print(f"CELDA: {row}, {col}")
-    maze.show()
-    print(format(my_cell.walls, "04b"))
-    print("Abro N")
-    my_cell.open_wall(Wall.N)
-    maze.show()
-    print("Abro S")
-    my_cell.open_wall(Wall.S)
-    maze.show()
-    print("Abro E")
-    my_cell.open_wall(Wall.E)
-    maze.show()
-    print("Abro W")
-    my_cell.open_wall(Wall.W)
-    maze.show()
-
-# mz = Maze(5, 5)
-# mz.show()
-# abrecierra(mz, 2, 2)
-# mz = Maze(3, 3)
-# abrecierra(mz, 1, 1)
-# mz = Maze(5, 5)
-# mz.show()
-# abrecierra(mz, 4, 4)
-
-mz = Maze(20, 20)
-mz.show()
-mz.do_perfect()
+    def redo(self) -> None:
+        self.rnd = random.Random()
+        self.matrix: list[list] = (
+            [[Cell(row=row, col=col, maze=self)
+              for col in range(self.cols)]
+                for row in range(self.rows)])
+        self.do_perfect()
+        if not self.perfect:
+            self.unperfect()
