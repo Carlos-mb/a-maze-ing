@@ -52,7 +52,7 @@ class Cell():
         Wall.W: (0, -1)
         }
 
-    
+
     # List of oposite walls to simplify open neighbor's walls
     oposite_wall: dict[int, int] = {
         Wall.N: Wall.S,
@@ -224,7 +224,7 @@ class Maze():
         if self.showdraw:
             os.system("clear")
             self.draw()
-            time.sleep(0.01)
+            time.sleep(0.1)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
@@ -286,7 +286,7 @@ class Maze():
             if self.showdraw:
                 os.system("clear")
                 self.draw(cell)
-                time.sleep(0.01)
+                time.sleep(0.1)
 
             cell = queue.popleft()
             neighbors: list[Cell] = cell.able_neighbors()
@@ -332,8 +332,7 @@ class Maze():
                 cell.visited = False
 
         self.explore(self.matrix[start[0]][start[1]], end)
-        # for cell in path:
-        #     print(cell)
+
 
     def draw42(self, center: tuple[int, int]) -> None:
         r, c = center

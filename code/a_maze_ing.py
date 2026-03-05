@@ -88,6 +88,7 @@ def main():
               config["HEIGHT"],
               config["SEED"])
     mz.showdraw = config["SHOWDRAW"]
+    
     mz.do_perfect()
     mz.draw()
     mz.get_path(config["ENTRY"], config["EXIT"])
