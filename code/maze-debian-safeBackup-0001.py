@@ -2,6 +2,7 @@ from enum import IntFlag
 import random
 import os
 import time
+import collections
 
 
 class Wall(IntFlag):
@@ -118,13 +119,17 @@ class Cell():
         # walls & N == wall exist
 
         if (self.row > 0) and not (self.walls & Wall.N):
-            neighbors.append(matrix[self.row - 1][self.col])
+            if not matrix[self.row - 1][self.col].visited:
+                neighbors.append(matrix[self.row - 1][self.col])
         if (self.row < self.maze.rows - 1) and not (self.walls & Wall.S):
-            neighbors.append(matrix[self.row + 1][self.col])
+            if not matrix[self.row + 1][self.col].visited:
+                neighbors.append(matrix[self.row + 1][self.col])
         if (self.col > 0) and not (self.walls & Wall.W):
-            neighbors.append(matrix[self.row][self.col - 1])
+            if not matrix[self.row][self.col - 1].visited:
+                neighbors.append(matrix[self.row][self.col - 1])
         if (self.col < self.maze.cols - 1) and not (self.walls & Wall.E):
-            neighbors.append(matrix[self.row][self.col + 1])        
+            if not matrix[self.row][self.col + 1].visited:
+                neighbors.append(matrix[self.row][self.col + 1])
 
         return neighbors
 
@@ -143,23 +148,53 @@ class Maze():
               for col in range(cols)]
                 for row in range(rows)])
         self.showdraw = False
+        self.shortest_path: list[Cell] = []
+        self.coords42: list[tuple[int, int]] = []
 
-    def draw(self):
+    def draw(self, pos: Cell | None = None, path: list = []):
 
-        print(" " + "__" * (self.cols - 1) + "_")
+        line = "+"
+        for _ in range(self.cols):
+            line += "---+"
+        print(line)
 
         for r in range(self.rows):
+
+            # interior line
             line = "|"
             for c in range(self.cols):
-                cell: Cell = self.matrix[r][c]
-                if cell.walls & Wall.S:
-                    line += "_"
+
+                cell = self.matrix[r][c]
+
+                if cell == pos:
+                    content = " X "
+                elif cell in path:
+                    content = " . "
+                elif cell in self.coords42:
+                    content = " # "
                 else:
-                    line += " "
+                    content = "   "
+
+                line += content
+
                 if cell.walls & Wall.E:
                     line += "|"
                 else:
-                    line += "_"
+                    line += " "
+
+            print(line)
+
+            # floor lines
+            line = "+"
+            for c in range(self.cols):
+
+                cell = self.matrix[r][c]
+
+                if cell.walls & Wall.S:
+                    line += "---+"
+                else:
+                    line += "   +"
+
             print(line)
 
     def cell_exist(self, row: int, col: int):
@@ -178,24 +213,22 @@ class Maze():
         else:
             raise ValueError("Cells are not adjacent")
 
-    def explore(self, cell: Cell):
+    def tunnel(self, cell: Cell):
         cell.visited = True
         neighbors = cell.notvisited()
 
         if self.showdraw:
             os.system("clear")
             self.draw()
-            time.sleep(0.01)
+            time.sleep(0.1)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
             self.connect(cell, dest)
-            self.explore(dest)
+            self.tunnel(dest)
 
     def pending_neighbors(self):
 
-        # Cant use set() because I need same order for the same seed and Set
-        # is unshorted
         notvisited = []
         for row in self.matrix:
             for cell in row:
@@ -216,12 +249,12 @@ class Maze():
 
     def do_perfect(self):
         start = self.matrix[0][0]
-        self.explore(start)
+        self.tunnel(start)
 
         while any(not cell.visited for row in self.matrix for cell in row):            
             pendings = self.pending_neighbors()
-            self.explore(self.rnd.choice(pendings))
-            # self.explore(self.rnd.choice([self.pending_neighbors()]))
+            self.tunnel(self.rnd.choice(pendings))
+            # self.tunnel(self.rnd.choice([self.pending_neighbors()]))
 
     def redo(self) -> None:
         self.rnd = random.Random()
@@ -233,11 +266,83 @@ class Maze():
         if not self.perfect:
             self.unperfect()
 
-    def shortest_path(self, 
-                      start: tuple[int, int],
-                      end: tuple[int, int]
-                      ) -> None:
+    def explore(self, cell: Cell,
+                end: tuple[int, int]
+                ) -> None:
+
+        parents: dict[Cell, Cell] = {}
+        queue = collections.deque()
+
+        queue.append(cell)
+        cell.visited = True
+
+        while queue:
+            if self.showdraw:
+                os.system("clear")
+                self.draw(cell)
+                time.sleep(0.1)
+
+            cell = queue.popleft()
+            neighbors: list[Cell] = cell.able_neighbors()
+            if neighbors:
+                for next in neighbors:
+                    queue.append(next)
+                    next.visited = True
+                    parents[next] = cell
+                    if next == self.matrix[end[0]][end[1]]:
+                        cell = next
+                        queue = None
+                        break
+
+        # create and draw path
+        path: list[Cell] = [cell]
+        while parents.get(cell, False):
+            path.append(parents[cell])
+            cell = parents[cell]
+
+        self.draw(path=path)
+
+        # Create directions from path
+        directions = []
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+
+            diff = (b.row - a.row, b.col - a.col)
+
+            for wall, rel in Cell.relative.items():
+                if rel == diff:
+                    directions.append(wall.name)
+                    break
+
+
+    def get_path(self,
+                 start: tuple[int, int],
+                 end: tuple[int, int]
+                 ) -> None:
 
         for row in self.matrix:
             for cell in row:
                 cell.visited = False
+
+        self.explore(self.matrix[start[0]][start[1]], end)
+        # for cell in path:
+        #     print(cell)
+
+    def draw42(self, center: tuple[int, int]) -> list[tuple[int, int]]:
+        r, c = center
+
+        pattern = [
+            (-2, -4),                      (-2, +1), (-2, +2), (-2, +3),
+            (-1, -4),                                          (-1, +3),
+            (+0, -4), (+0, -3), (+0, -2),  (+0, +1), (+0, +2), (+0, +3),
+                                (+1, -2),  (+1, +1),
+                                (+2, -2),  (+2, +1), (+2, +2), (+2, +3)
+        ]
+
+        self.coords42 = []
+        for dr, dc in pattern:
+            rr, cc = r + dr, c + dc
+            if not self.cell_exist(rr, cc):
+                self.coords42 = []
+            self.coords42.append((rr, cc))

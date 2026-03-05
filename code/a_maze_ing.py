@@ -91,9 +91,10 @@ def main():
     mz.do_perfect()
     mz.draw()
     mz.get_path(config["ENTRY"], config["EXIT"])
-    # mz.unperfect()
-    # mz.draw()
-    # mz.get_path(config["ENTRY"], config["EXIT"])
+    input()
+    mz.unperfect()
+    mz.draw()
+    mz.get_path(config["ENTRY"], config["EXIT"])
     # # if not mz.showdraw:
     #     mz.draw()
     # render = Renderer(mz)

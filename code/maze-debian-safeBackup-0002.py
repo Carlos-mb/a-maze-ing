@@ -79,20 +79,21 @@ class Cell():
 
         if self.row > 0:
             if (not matrix[self.row - 1][self.col].visited and
-                    matrix[self.row - 1][self.col] not in self.maze.coords42):
-                neighbors.append(matrix[self.row - 1][self.col])
+                    matrix[self.row - 1][self.col] in self.maze.coords42):
+                    neighbors.append(matrix[self.row - 1][self.col])
         if self.row < self.maze.rows - 1:
-            if (not matrix[self.row + 1][self.col].visited and
-                    matrix[self.row + 1][self.col] not in self.maze.coords42):
+            if not matrix[self.row + 1][self.col].visited:
                 neighbors.append(matrix[self.row + 1][self.col])
         if self.col > 0:
-            if (not matrix[self.row][self.col - 1].visited and
-                    matrix[self.row][self.col - 1] not in self.maze.coords42):
+            if not matrix[self.row][self.col - 1].visited:
                 neighbors.append(matrix[self.row][self.col - 1])
         if self.col < self.maze.cols - 1:
-            if (not matrix[self.row][self.col + 1].visited and
-                    matrix[self.row][self.col + 1] not in self.maze.coords42):
+            if not matrix[self.row][self.col + 1].visited:
                 neighbors.append(matrix[self.row][self.col + 1])
+
+        for cell in neighbors:
+            if cell in self.coords42:
+                neighbors.remove(cell)
 
         return (neighbors)
 
@@ -224,7 +225,7 @@ class Maze():
         if self.showdraw:
             os.system("clear")
             self.draw()
-            time.sleep(0.01)
+            time.sleep(0.1)
 
         if len(neighbors) > 0:
             dest = self.rnd.choice(neighbors)
@@ -286,7 +287,7 @@ class Maze():
             if self.showdraw:
                 os.system("clear")
                 self.draw(cell)
-                time.sleep(0.01)
+                time.sleep(0.1)
 
             cell = queue.popleft()
             neighbors: list[Cell] = cell.able_neighbors()
@@ -354,6 +355,4 @@ class Maze():
             else:
                 self.coords42 = []
                 break
-
-        for cell in self.coords42:
-            cell.visited = True
+            
