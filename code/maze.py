@@ -101,11 +101,11 @@ class Cell():
         neighbor_row = self.row + Cell.relative[wall][0]
         neighbor_col = self.col + Cell.relative[wall][1]
 
-        # If not in the limits
+        # If there is a valid neighbor
         if (self.maze.cell_exist(neighbor_row, neighbor_col)):
 
             # Open my wall
-            self.walls &= ~wall  # Open the wall doing "and not wall.X")     
+            self.walls &= ~wall  # Open the wall doing "and not wall.X")
 
             # Open neighbor's wall
             self.maze.matrix[neighbor_row][neighbor_col].walls\
@@ -169,20 +169,26 @@ class Maze():
 
     def draw(self, pos: Cell | None = None, path: list = []):
 
-        color0 = "\033[0m"        
+        # color_reset = "\033[0m"
+        color0 = "\033[0m"
         color1 = "\033[92m"
         color2 = "\033[91m"
         color3 = "\033[93m"
+        color4 = "\033[94m"
 
-        line = "+"
-        for _ in range(self.cols):
-            line += "---+"
+        line = "╔"
+        for c in range(self.cols):
+            line += "═══"
+            if c < self.cols - 1:
+                line += "╦"
+            else:
+                line += "╗"
         print(line)
 
         for r in range(self.rows):
 
             # interior line
-            line = "|"
+            line = "║"
             for c in range(self.cols):
 
                 cell = self.matrix[r][c]
@@ -195,33 +201,47 @@ class Maze():
                     elif (r, c) == self.exit:
                         content = color2 + " X " + color0
                     else:
-                        content = color3 + " . " + color0
+                        content = color3 + " * " + color0
                 elif cell in self.coords42:
-                    content = " # "
+                    content = color4 + " # " + color0
                 else:
                     content = "   "
 
                 line += content
 
                 if cell.walls & Wall.E:
-                    line += "|"
+                    line += "║"
                 else:
                     line += " "
 
             print(line)
 
-            # floor lines
-            line = "+"
-            for c in range(self.cols):
+            if r < self.rows - 1:
+                line = "╠"
+                for c in range(self.cols):
 
-                cell = self.matrix[r][c]
+                    cell = self.matrix[r][c]
 
-                if cell.walls & Wall.S:
-                    line += "---+"
-                else:
-                    line += "   +"
+                    if cell.walls & Wall.S:
+                        line += "═══"
+                    else:
+                        line += "   "
 
-            print(line)
+                    if c < self.cols - 1:
+                        line += "╬"
+                    else:
+                        line += "╣"
+
+                print(line)
+
+        line = "╚"
+        for c in range(self.cols):
+            line += "═══"
+            if c < self.cols - 1:
+                line += "╩"
+            else:
+                line += "╝"
+        print(line)
 
     def cell_exist(self, row: int, col: int):
         return (row >= 0 and col >= 0 and row < self.rows and col < self.cols
@@ -268,12 +288,13 @@ class Maze():
 
     def unperfect(self) -> None:
         """Do imperfect an perfect maze"""
-        # Enumarete generates a tupla of pairs [0, value1], [1, value2]
-        for i, row in enumerate(self.matrix[1:-1]):
-            if i % 2 == 0:
-                cell: Cell = self.rnd.choice(row[1:-1])
+        # Enumarete generates a tupla of pairs [0, value1], [1, value2]        
+        for i, row in enumerate(self.matrix):  # [1:-1]
+            if i % 2 == 0 or self.rows == 2:
+                cell: Cell = self.rnd.choice(row)  # [1:-1]
                 closed = [wall for wall in Wall if cell.walls & wall]
                 if closed:
+                    # cell.open_wall(self.rnd.choice(closed))
                     cell.open_wall(self.rnd.choice(closed))
 
     def do_perfect(self):
@@ -314,7 +335,12 @@ class Maze():
         while queue:
             if self.showdraw:
                 os.system("clear")
-                self.draw(current)
+                # create path
+                path: list[Cell] = [current]
+                while parents.get(current, False):
+                    path.append(parents[current])
+                    current = parents[current]
+                self.draw(current, path=path)
                 time.sleep(0.1)
 
             current = queue.popleft()
@@ -335,6 +361,7 @@ class Maze():
             path.append(parents[current])
             current = parents[current]
 
+        os.system("clear")
         self.draw(path=path)
 
         # Create directions from path
@@ -349,7 +376,6 @@ class Maze():
                 if rel == diff:
                     directions.append(wall.name)
                     break
-
 
     def draw42(self, center: tuple[int, int]) -> None:
         r, c = center
