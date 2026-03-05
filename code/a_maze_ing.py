@@ -3,7 +3,6 @@ from renderer import Renderer
 import sys
 
 
-
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
     output: dict = {}
@@ -68,7 +67,6 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
             raise ValueError("Error: SHOWDRAW should be true | false")
         output["SHOWDRAW"] = output["SHOWDRAW"] == "true"
 
-
         output["SEED"] = int(output.get("SEED", "94"))
 
     except ValueError as e:
@@ -86,20 +84,22 @@ def main():
 
     mz = Maze(config["WIDTH"],
               config["HEIGHT"],
-              config["SEED"])
+              config["SEED"],
+              config["PERFECT"],
+              config["ENTRY"],
+              config["EXIT"])
+
     mz.showdraw = config["SHOWDRAW"]
     
     mz.do_perfect()
-    mz.draw()
-    mz.get_path(config["ENTRY"], config["EXIT"])
-    input()
+    # mz.draw()
+    # mz.get_path(config["ENTRY"], config["EXIT"])
+    # input()
     mz.unperfect()
     mz.draw()
-    mz.get_path(config["ENTRY"], config["EXIT"])
-    # # if not mz.showdraw:
-    #     mz.draw()
-    # render = Renderer(mz)
-    # render.render()
+    mz.get_path()
+    render = Renderer(mz)
+    render.render()
 
 
 if __name__ == "__main__":

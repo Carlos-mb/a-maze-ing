@@ -10,19 +10,23 @@ class Renderer():
         self.maze = maze
 
     def __render_ascii__(self):
+        os.system("clear")
+        self.maze.draw()
+
         while True:
-            os.system("clear")
-            self.maze.draw()
 
             cmd = input("[r] regenerate  [p] path  [q] quit: ")
 
             if cmd == "q":
                 break
             elif cmd == "r":
+                os.system("clear")
                 self.maze.redo()
+                self.maze.draw()
             elif cmd == "p":
-                self.show_path = not self.show_path
+                os.system("clear")
+                self.maze.get_path()
 
     def render(self) -> None:
-        if ascii:
+        if True:
             self.__render_ascii__()

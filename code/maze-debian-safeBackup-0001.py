@@ -129,14 +129,12 @@ class Cell():
             not matrix[self.row + 1][self.col].visited and
                 matrix[self.row + 1][self.col] not in self.maze.coords42):
             neighbors.append(matrix[self.row + 1][self.col])
-        if ((self.col > 0) and not (self.walls & Wall.W) and
-            not matrix[self.row][self.col - 1].visited and
-                matrix[self.row][self.col - 1] not in self.maze.coords42):
-            neighbors.append(matrix[self.row][self.col - 1])
-        if ((self.col < self.maze.cols - 1) and not (self.walls & Wall.E) and
-            not matrix[self.row][self.col + 1].visited and
-                matrix[self.row][self.col + 1] not in self.maze.coords42):
-            neighbors.append(matrix[self.row][self.col + 1])
+        if (self.col > 0) and not (self.walls & Wall.W):
+            if not matrix[self.row][self.col - 1].visited:
+                neighbors.append(matrix[self.row][self.col - 1])
+        if (self.col < self.maze.cols - 1) and not (self.walls & Wall.E):
+            if not matrix[self.row][self.col + 1].visited:
+                neighbors.append(matrix[self.row][self.col + 1])
 
         return neighbors
 
@@ -169,11 +167,6 @@ class Maze():
 
     def draw(self, pos: Cell | None = None, path: list = []):
 
-        color0 = "\033[0m"        
-        color1 = "\033[92m"
-        color2 = "\033[91m"
-        color3 = "\033[93m"
-
         line = "+"
         for _ in range(self.cols):
             line += "---+"
@@ -188,14 +181,9 @@ class Maze():
                 cell = self.matrix[r][c]
 
                 if cell == pos:
-                    content = color2 + " X " + color0
+                    content = " X "
                 elif cell in path:
-                    if (r, c) == self.entry:
-                        content = color1 + " E " + color0
-                    elif (r, c) == self.exit:
-                        content = color2 + " X " + color0
-                    else:
-                        content = color3 + " . " + color0
+                    content = " . "
                 elif cell in self.coords42:
                     content = " # "
                 else:
@@ -333,7 +321,7 @@ class Maze():
         path: list[Cell] = [current]
         while parents.get(current, False):
             path.append(parents[current])
-            current = parents[current]
+            cell = parents[current]
 
         self.draw(path=path)
 
