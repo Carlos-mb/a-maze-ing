@@ -160,7 +160,7 @@ class Maze():
                 for row in range(rows)])
         self.showdraw = False
         self.shortest_path: list[Cell] = []
-        self.coords42: list[tuple[int, int]] = []
+        self.coords42: list[Cell] = []
         self.entry = entry
         if exit is None:
             self.exit = (rows - 1, cols - 1)
@@ -243,8 +243,13 @@ class Maze():
                 line += "╝"
         print(line)
 
-    def cell_exist(self, row: int, col: int):
-        return (row >= 0 and col >= 0 and row < self.rows and col < self.cols
+    def cell_exist(self, row: int, col: int) -> bool:
+        if (row >= 0 and col >= 0 and
+                row < self.rows and col < self.cols
+                and self.matrix[row][col] not in self.coords42):
+            print(row, ",", col)
+        return (row >= 0 and col >= 0 and
+                row < self.rows and col < self.cols
                 and self.matrix[row][col] not in self.coords42)
 
     def connect(self, origin: Cell, destination: Cell) -> None:
@@ -288,10 +293,12 @@ class Maze():
 
     def unperfect(self) -> None:
         """Do imperfect an perfect maze"""
-        # Enumarete generates a tupla of pairs [0, value1], [1, value2]        
+        # Enumarete generates a tupla of pairs [0, value1], [1, value2]
         for i, row in enumerate(self.matrix):  # [1:-1]
             if i % 2 == 0 or self.rows == 2:
                 cell: Cell = self.rnd.choice(row)  # [1:-1]
+                while cell in self.coords42:
+                    cell: Cell = self.rnd.choice(row)  # [1:-1]
                 closed = [wall for wall in Wall if cell.walls & wall]
                 if closed:
                     # cell.open_wall(self.rnd.choice(closed))
@@ -303,9 +310,11 @@ class Maze():
         self.draw42((self.rows // 2, self.cols // 2))
         self.tunnel(start)
 
-        while any(not cell.visited for row in self.matrix for cell in row):
-            pendings = self.pending_neighbors()
+        # while any(not cell.visited for row in self.matrix for cell in row):
+        pendings = self.pending_neighbors()
+        while pendings:
             self.tunnel(self.rnd.choice(pendings))
+            pendings = self.pending_neighbors()
             # self.tunnel(self.rnd.choice([self.pending_neighbors()]))
 
     def redo(self) -> None:
@@ -313,7 +322,7 @@ class Maze():
         self.matrix: list[list] = (
             [[Cell(row=row, col=col, maze=self)
               for col in range(self.cols)]
-                for row in range(self.rows)])        
+                for row in range(self.rows)])
         self.do_perfect()
         if not self.perfect:
             self.unperfect()
@@ -377,8 +386,7 @@ class Maze():
                     directions.append(wall.name)
                     break
 
-    def draw42(self, center: tuple[int, int]) -> None:
-        r, c = center
+    def __try_to_draw42(self, center: tuple[int, int]) -> None:
 
         pattern = [
             (-2, -3),                      (-2, +1), (-2, +2), (-2, +3),
@@ -388,14 +396,41 @@ class Maze():
                                 (+2, -1),  (+2, +1), (+2, +2), (+2, +3)
         ]
 
-        self.coords42 = []
+        r, c = center
+        if self.rows - c < 4:
+            return
+        self.coords42: list[Cell] = []
         for dr, dc in pattern:
             rr, cc = r + dr - 1, c + dc - 1
             if self.cell_exist(rr, cc):
-                self.coords42.append((self.matrix[rr][cc]))                
+                self.coords42.append((self.matrix[rr][cc]))
             else:
                 self.coords42 = []
                 break
 
+    def draw42(self, center: tuple[int, int]) -> None:
+
+        self.__try_to_draw42(center)
+
+        for coord in self.coords42:  # only enter if 42 has been drawed
+            if ((coord.row, coord.col) == self.entry or
+                    (coord.row, coord.col) == self.exit):
+                self.coords42 = []
+
+                for row in self.matrix:  # no [3:] -> Good for any pattern size
+                    for cell in row:
+                        self.__try_to_draw42((cell.row, cell.col))
+
+                        for coord in self.coords42:
+                            if ((coord.row, coord.col) == self.entry or
+                                    (coord.row, coord.col) == self.exit):
+                                self.coords42 = []
+                                break
+
+                        if len(self.coords42) > 0:
+                            break
+                    if len(self.coords42) > 0:
+                        break
+                break
         for cell in self.coords42:
             cell.visited = True

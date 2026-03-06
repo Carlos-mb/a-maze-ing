@@ -53,7 +53,7 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
         # Not sure of this:
         # if output["ENTRY"][0] == output["EXIT"][0] and\
         #    output["ENTRY"][1] == output["EXIT"][1]:
-        #     raise ValueError("Error: ENTRY and EXIT must be different points")
+        #    raise ValueError("Error: ENTRY and EXIT must be different points")
 
         output["OUTPUT_FILE"] = output.get("OUTPUT_FILE", "maze.txt")
 
@@ -90,14 +90,11 @@ def main():
               config["EXIT"])
 
     mz.showdraw = config["SHOWDRAW"]
-    
-    mz.do_perfect()
-    # mz.draw()
-    # mz.get_path(config["ENTRY"], config["EXIT"])
-    # input()
+
+    # mz.do_perfect()
     # mz.unperfect()
     # mz.draw()
-    # mz.get_path()
+
     render = Renderer(mz)
     render.render()
 

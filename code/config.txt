@@ -1,9 +1,11 @@
-WIDTH=2
-HEIGHT=2
+WIDTH=8
+HEIGHT=8
 ENTRY=0,0
-EXIT=1, 1
+#EXIT=rw, cl
+EXIT=3, 1
 OUTPUT_FILE=maze.txt
+#PERFECT=True warranty perfect. Flase does not warranty imperfect maze
 PERFECT=False
-SEED=94
+SEED=42
 SHOWDRAW=False
 GRAPHIC_MODE=Text
