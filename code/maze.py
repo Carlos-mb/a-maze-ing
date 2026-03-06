@@ -307,7 +307,7 @@ class Maze():
     def do_perfect(self):
         """Create a perfect maze"""
         start = self.matrix[0][0]
-        self.draw42((self.rows // 2, self.cols // 2))
+        self.draw42(((self.rows + 1) // 2, (self.cols + 1) // 2))
         self.tunnel(start)
 
         # while any(not cell.visited for row in self.matrix for cell in row):
@@ -397,7 +397,7 @@ class Maze():
         ]
 
         r, c = center
-        if self.rows - c < 4:
+        if self.cols - c < 4:
             return
         self.coords42: list[Cell] = []
         for dr, dc in pattern:

@@ -31,8 +31,13 @@ class Renderer():
         path = False
 
         while True:
-
-            cmd = input("[r] regenerate  [p] path  [q] quit: ")
+            try:
+                cmd = input("[r] regenerate  [p] path  [q] quit: ")
+            except EOFError:
+                break
+            except KeyboardInterrupt:
+                print()
+                break
 
             if cmd == "q":
                 break
@@ -56,6 +61,18 @@ class Renderer():
                 self.newcoordE(self.maze.entry[0] + 1, self.maze.entry[1])
             elif cmd.startswith("I"):
                 self.newcoordE(self.maze.entry[0] - 1, self.maze.entry[1])
+            elif cmd == '\x1b[C':
+                self.maze.cols += 1
+                self.maze.redo()
+            elif cmd == '\x1b[D':
+                self.maze.cols = max(self.maze.cols - 1, 2)
+                self.maze.redo()
+            elif cmd == '\x1b[B':
+                self.maze.rows += 1
+                self.maze.redo()
+            elif cmd == '\x1b[A':
+                self.maze.rows = max(self.maze.rows - 1, 2)
+                self.maze.redo()
             else:
                 try:
                     number = int(cmd)

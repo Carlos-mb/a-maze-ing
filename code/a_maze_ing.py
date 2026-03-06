@@ -13,14 +13,23 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
     try:
         with open(sys.argv[1]) as f:
-            for line in f:
+            for i, line in enumerate(f, start=1):
                 line = line.strip()
                 if line and not line.startswith("#"):
+                    if "=" not in line:
+                        msg = (
+                            f"Error: invalid config line {i}. "
+                            "Expected KEY=VALUE"
+                        )
+                        raise ValueError(msg)
                     key, value = line.split("=", 1)
                     output[key.strip()] = value.strip()
 
     except FileNotFoundError:
         print("ERROR: config file does not exist")
+        return None
+    except ValueError as e:
+        print(e)
         return None
     except Exception:
         print("Undefined error. Usage: python3 a_maze_ing.py config.txt")
@@ -82,21 +91,26 @@ def main():
     if config is None:
         return
 
-    mz = Maze(config["WIDTH"],
-              config["HEIGHT"],
-              config["SEED"],
-              config["PERFECT"],
-              config["ENTRY"],
-              config["EXIT"])
+    try:
+        mz = Maze(cols=config["WIDTH"],
+                  rows=config["HEIGHT"],
+                  seed=config["SEED"],
+                  perfect=config["PERFECT"],
+                  entry=config["ENTRY"],
+                  exit=config["EXIT"])
 
-    mz.showdraw = config["SHOWDRAW"]
+        mz.showdraw = config["SHOWDRAW"]
 
-    # mz.do_perfect()
-    # mz.unperfect()
-    # mz.draw()
+        # mz.do_perfect()
+        # mz.unperfect()
+        # mz.draw()
 
-    render = Renderer(mz)
-    render.render()
+        render = Renderer(mz)
+        render.render()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user")
+    except Exception as e:
+        print(f"Runtime error: {e}")
 
 
 if __name__ == "__main__":
