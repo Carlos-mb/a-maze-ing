@@ -89,6 +89,10 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
         output["SEED"] = int(output.get("SEED", "94"))
 
+        output["GRAPHIC_MODE"] = output.get("GRAPHIC_MODE", "Mlx").capitalize()
+        if output["GRAPHIC_MODE"] not in ("ASCII", "Mlx"):
+            raise ValueError("Error: GRAPHIC_MODE should be ASCII | Mlx")
+
     except ValueError as e:
         print(e)
         return None
@@ -125,7 +129,9 @@ def main() -> None:
         # mz.unperfect()
         # mz.draw()
 
-        render: Renderer = Renderer(mz)
+        graphic_mode = cast(str, config["GRAPHIC_MODE"])
+        is_ascii = graphic_mode == "ASCII"
+        render: Renderer = Renderer(mz, ascii=is_ascii)
         render.render()
     except KeyboardInterrupt:
         print("\nInterrupted by user")
