@@ -150,6 +150,9 @@ class Cell:
 
         return neighbors
 
+    def to_hex(self) -> str:
+        return format(int(self.walls), "X")
+
 
 class Maze:
     """Generate, mutate, and solve a maze.
@@ -170,6 +173,7 @@ class Maze:
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
         exit: tuple[int, int] | None = None,
+        outputfile: str = ""
     ) -> None:
         """Initialize maze grid and generation options.
 
@@ -200,6 +204,9 @@ class Maze:
             self.exit: tuple[int, int] = (rows - 1, cols - 1)
         else:
             self.exit = exit
+        self.outputfile: str = outputfile
+        # self.color: str = "\033[0m"
+        self.color = "\033[95m"
 
     def draw(self, pos: Cell | None = None, path: list[Cell] | None = None) -> None:
         """Draw maze in terminal.
@@ -214,14 +221,15 @@ class Maze:
         if path is None:
             path = []
 
-        # color_reset = "\033[0m"
-        color0: str = "\033[0m"
+        color_reset = "\033[0m"
+        # color0: str = "\033[0m"
+        color0: str = self.color
         color1: str = "\033[92m"
         color2: str = "\033[91m"
         color3: str = "\033[93m"
         color4: str = "\033[94m"
 
-        line: str = "╔"
+        line: str = self.color + "╔"
         for c in range(self.cols):
             line += "═══"
             if c < self.cols - 1:
@@ -287,7 +295,7 @@ class Maze:
                 line += "╩"
             else:
                 line += "╝"
-        print(line)
+        print(line + color_reset)
 
     def cell_exist(self, row: int, col: int) -> bool:
         """Check whether a coordinate is inside bounds and not blocked.
@@ -467,10 +475,10 @@ class Maze:
         self.draw(path=path)
 
         # Create directions from path
-        directions: list[str] = []
-        for i in range(len(path) - 1):
+        directions: str = ""
+        for i in range(len(path) - 1, 0, -1):  # reverse range: start,stop,step
             a: Cell = path[i]
-            b: Cell = path[i + 1]
+            b: Cell = path[i - 1]
 
             diff: tuple[int, int] = (b.row - a.row, b.col - a.col)
 
@@ -478,8 +486,10 @@ class Maze:
                 if rel == diff:
                     wall_name: str | None = wall.name
                     if wall_name:
-                        directions.append(wall_name)
+                        directions += (wall_name)
                     break
+        
+        self.export_file(directions)
 
         self.shortest_path = path
 
@@ -548,3 +558,26 @@ class Maze:
                 break
         for cell in self.coords42:
             cell.visited = True
+
+    def matrix_to_hex(self):
+
+        hex_matrix: list[str] = []
+
+        for row in self.matrix:
+            hex_matrix.append("")
+            for cell in row:
+                hex_matrix[-1] += cell.to_hex()
+
+        return hex_matrix
+
+    def export_file(self, directions: str) -> None:
+        hex_matrix = self.matrix_to_hex()
+
+        if self.outputfile != "":
+            with open(self.outputfile, "w") as f:
+                for row in hex_matrix:
+                    f.write(row + "\n")
+                f.write("\n")
+                f.write(str(self.entry[1]) + "," + str(self.entry[0]) + "\n")
+                f.write(str(self.exit[1]) + "," + str(self.exit[0]) + "\n")
+                f.write(directions + "\n")

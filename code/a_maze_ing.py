@@ -116,7 +116,8 @@ def main() -> None:
                         seed=cast(int, config["SEED"]),
                         perfect=cast(bool, config["PERFECT"]),
                         entry=cast(tuple[int, int], config["ENTRY"]),
-                        exit=cast(tuple[int, int], config["EXIT"]))
+                        exit=cast(tuple[int, int], config["EXIT"]),
+                        outputfile=cast(str, config["OUTPUT_FILE"]))
 
         mz.showdraw = cast(bool, config["SHOWDRAW"])
 

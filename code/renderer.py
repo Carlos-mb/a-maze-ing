@@ -1,5 +1,6 @@
 import maze
 import os
+import random
 
 
 class Renderer:
@@ -67,6 +68,15 @@ class Renderer:
         Returns:
             None
         """
+        colors: list[str] = [
+            "\033[91m",  # Red
+            "\033[92m",  # Green
+            "\033[93m",  # Yellow
+            "\033[94m",  # Blue
+            "\033[95m",  # Magenta
+            "\033[96m",  # Cyan
+        ]
+
         os.system("clear")
         self.maze.draw()
         path: bool = False
@@ -116,22 +126,9 @@ class Renderer:
             elif cmd == '\x1b[A':
                 self.maze.rows = max(self.maze.rows - 1, 2)
                 self.maze.redo()
-            else:
-                try:
-                    number: int = int(cmd)
-                    if (self.maze.entry[0] < number and
-                            self.maze.entry[1] < number and
-                            self.maze.exit[0] < number and
-                            self.maze.exit[1] < number):
-                        self.maze.rows = number
-                        self.maze.cols = number
-                        self.maze.redo()
-                    else:
-                        print("ERROR: cant reduce maze "
-                              "with current E and X values")
-                except ValueError:
-                    pass
-
+            elif cmd == "c":
+                self.maze.color = random.choice(
+                    [c for c in colors if c != self.maze.color])
             os.system("clear")
             if path:
                 self.maze.get_path()
