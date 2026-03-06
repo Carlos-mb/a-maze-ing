@@ -6,35 +6,13 @@ import collections
 
 
 class Wall(IntFlag):
-    """
-    Bitmask representation of the four possible walls of a maze cell.
+    """Bitmask flags representing walls of a maze cell.
 
-    Each member represents a cardinal direction and corresponds to a single bit
-    in a 4-bit integer. A wall being present (closed) means its bit is set to 1
-    A wall being absent (open) means its bit is set to 0.
-
-    Bit mapping (LSB first):
-
-        Bit 0 (1)  -> North
-        Bit 1 (2)  -> East
-        Bit 2 (4)  -> South
-        Bit 3 (8)  -> West
-
-    This class inherits from IntFlag instead of Enum because multiple walls
-    can exist simultaneously in a single cell. IntFlag allows bitwise
-    combination using operators such as |, &, and ~.
-
-    Example:
-        >>> cell_walls = Wals.N | Wall.E
-        >>> int(cell_walls)
-        3
-        >>> bool(cell_walls & Wall.N)
-        True
-        >>> bool(cell_walls & Wall.S)
-        False
-
-    This representation directly matches the hexadecimal encoding required
-    for the maze output file format.
+    Values:
+        N: North wall.
+        E: East wall.
+        S: South wall.
+        W: West wall.
     """
     N = 1
     E = 2
@@ -42,7 +20,16 @@ class Wall(IntFlag):
     W = 8
 
 
-class Cell():
+class Cell:
+    """Represent a single maze cell.
+
+    Attributes:
+        row (int): Row index.
+        col (int): Column index.
+        maze (Maze): Parent maze.
+        visited (bool): Traversal state.
+        walls (int): Bitmask of closed walls.
+    """
 
     # Relative position of a cell according to N/E/S/W
     relative: dict[Wall, tuple[int, int]] = {
@@ -50,7 +37,7 @@ class Cell():
         Wall.E: (0, +1),
         Wall.S: (+1, 0),
         Wall.W: (0, -1)
-        }
+    }
 
     # List of oposite walls to simplify open neighbor's walls
     oposite_wall: dict[Wall, Wall] = {
@@ -58,10 +45,19 @@ class Cell():
         Wall.E: Wall.W,
         Wall.S: Wall.N,
         Wall.W: Wall.E
-        }
+    }
 
     def __init__(self, row: int, col: int, maze: "Maze") -> None:
+        """Initialize a cell.
 
+        Args:
+            row (int): Row index.
+            col (int): Column index.
+            maze (Maze): Parent maze reference.
+
+        Returns:
+            None
+        """
         self.maze: Maze = maze
         self.row: int = row
         self.col: int = col
@@ -72,7 +68,11 @@ class Cell():
         self.walls: int = Wall.N | Wall.E | Wall.S | Wall.W
 
     def notvisited(self) -> list["Cell"]:
-        """Get NON VISITED neighbors"""
+        """Return unvisited neighbor cells excluding blocked pattern cells.
+
+        Returns:
+            list[Cell]: Unvisited adjacent cells.
+        """
         neighbors: list[Cell] = []
         matrix: list[list[Cell]] = self.maze.matrix
 
@@ -96,7 +96,14 @@ class Cell():
         return (neighbors)
 
     def open_wall(self, wall: Wall) -> None:
+        """Open one wall in this cell and opposite wall in adjacent cell.
 
+        Args:
+            wall (Wall): Wall direction to open.
+
+        Returns:
+            None
+        """
         # Get the neighbor coordinates using the wall position
         neighbor_row: int = self.row + Cell.relative[wall][0]
         neighbor_col: int = self.col + Cell.relative[wall][1]
@@ -105,15 +112,18 @@ class Cell():
         if (self.maze.cell_exist(neighbor_row, neighbor_col)):
 
             # Open my wall
-            self.walls &= ~wall  # Open the wall doing "and not wall.X")
+            self.walls &= ~wall  # Open the wall doing "and not wall.X"
 
             # Open neighbor's wall
             self.maze.matrix[neighbor_row][neighbor_col].walls\
                 &= ~self.oposite_wall[wall]
 
     def able_neighbors(self) -> list["Cell"]:
-        """Get able neighbors (with open walls) and not in 42 number"""
+        """Return traversable unvisited neighbors via open walls.
 
+        Returns:
+            list[Cell]: Reachable adjacent cells.
+        """
         neighbors: list[Cell] = []
         matrix: list[list[Cell]] = self.maze.matrix
 
@@ -141,15 +151,39 @@ class Cell():
         return neighbors
 
 
-class Maze():
+class Maze:
+    """Generate, mutate, and solve a maze.
 
-    def __init__(self,
-                 rows: int, cols: int,
-                 seed: int = 94,
-                 perfect: bool = True,
-                 entry: tuple[int, int] = (0, 0),
-                 exit: tuple[int, int] | None = None) -> None:
+    Attributes:
+        rows (int): Number of rows.
+        cols (int): Number of columns.
+        matrix (list[list[Cell]]): Grid of cells.
+        entry (tuple[int, int]): Start coordinate.
+        exit (tuple[int, int]): End coordinate.
+    """
 
+    def __init__(
+        self,
+        rows: int,
+        cols: int,
+        seed: int = 94,
+        perfect: bool = True,
+        entry: tuple[int, int] = (0, 0),
+        exit: tuple[int, int] | None = None,
+    ) -> None:
+        """Initialize maze grid and generation options.
+
+        Args:
+            rows (int): Row count.
+            cols (int): Column count.
+            seed (int): RNG seed.
+            perfect (bool): Whether maze remains perfect.
+            entry (tuple[int, int]): Entry coordinate.
+            exit (tuple[int, int] | None): Exit coordinate or default bottom-right.
+
+        Returns:
+            None
+        """
         self.rows: int = rows
         self.cols: int = cols
         self.rnd: random.Random = random.Random(seed)
@@ -167,10 +201,16 @@ class Maze():
         else:
             self.exit = exit
 
-    def draw(
-            self,
-            pos: Cell | None = None,
-            path: list[Cell] | None = None) -> None:
+    def draw(self, pos: Cell | None = None, path: list[Cell] | None = None) -> None:
+        """Draw maze in terminal.
+
+        Args:
+            pos (Cell | None): Optional highlighted position.
+            path (list[Cell] | None): Optional path to highlight.
+
+        Returns:
+            None
+        """
         if path is None:
             path = []
 
@@ -250,6 +290,15 @@ class Maze():
         print(line)
 
     def cell_exist(self, row: int, col: int) -> bool:
+        """Check whether a coordinate is inside bounds and not blocked.
+
+        Args:
+            row (int): Row index.
+            col (int): Column index.
+
+        Returns:
+            bool: `True` if the coordinate is valid.
+        """
         if (row >= 0 and col >= 0 and
                 row < self.rows and col < self.cols
                 and self.matrix[row][col] not in self.coords42):
@@ -259,7 +308,15 @@ class Maze():
                 and self.matrix[row][col] not in self.coords42)
 
     def connect(self, origin: Cell, destination: Cell) -> None:
+        """Open wall between two adjacent cells.
 
+        Args:
+            origin (Cell): Source cell.
+            destination (Cell): Adjacent destination cell.
+
+        Returns:
+            None
+        """
         if destination.row > origin.row:
             origin.open_wall(Wall.S)
         elif destination.row < origin.row:
@@ -272,6 +329,14 @@ class Maze():
             raise ValueError("Cells are not adjacent")
 
     def tunnel(self, cell: Cell) -> None:
+        """Recursively carve maze passages from a cell.
+
+        Args:
+            cell (Cell): Current cell.
+
+        Returns:
+            None
+        """
         cell.visited = True
         neighbors: list[Cell] = cell.notvisited()
 
@@ -286,7 +351,11 @@ class Maze():
             self.tunnel(dest)
 
     def pending_neighbors(self) -> list[Cell]:
+        """Collect visited cells that still have unvisited neighbors.
 
+        Returns:
+            list[Cell]: Candidate cells to continue carving.
+        """
         notvisited: list[Cell] = []
         for row in self.matrix:
             for cell in row:
@@ -298,7 +367,11 @@ class Maze():
         return list(notvisited)
 
     def unperfect(self) -> None:
-        """Do imperfect an perfect maze"""
+        """Open extra walls to make the maze imperfect.
+
+        Returns:
+            None
+        """
         # Enumarete generates a tupla of pairs [0, value1], [1, value2]
         for i, row in enumerate(self.matrix):  # [1:-1]
             if i % 2 == 0 or self.rows == 2:
@@ -312,7 +385,11 @@ class Maze():
                     cell.open_wall(self.rnd.choice(closed))
 
     def do_perfect(self) -> None:
-        """Create a perfect maze"""
+        """Generate a perfect maze.
+
+        Returns:
+            None
+        """
         start: Cell = self.matrix[0][0]
         self.draw42(((self.rows + 1) // 2, (self.cols + 1) // 2))
         self.tunnel(start)
@@ -325,6 +402,11 @@ class Maze():
             # self.tunnel(self.rnd.choice([self.pending_neighbors()]))
 
     def redo(self) -> None:
+        """Regenerate maze with current dimensions/options.
+
+        Returns:
+            None
+        """
         self.rnd = random.Random()
         self.matrix = (
             [[Cell(row=row, col=col, maze=self)
@@ -335,7 +417,11 @@ class Maze():
             self.unperfect()
 
     def get_path(self) -> None:
+        """Compute and draw shortest path from entry to exit.
 
+        Returns:
+            None
+        """
         for row in self.matrix:
             for cell in row:
                 cell.visited = False
@@ -398,7 +484,14 @@ class Maze():
         self.shortest_path = path
 
     def __try_to_draw42(self, center: tuple[int, int]) -> None:
+        """Try placing the 42-pattern obstacle centered at given coordinates.
 
+        Args:
+            center (tuple[int, int]): Candidate center coordinate.
+
+        Returns:
+            None
+        """
         pattern: list[tuple[int, int]] = [
             (-2, -3),                      (-2, +1), (-2, +2), (-2, +3),
             (-1, -3),                                          (-1, +3),
@@ -423,7 +516,14 @@ class Maze():
                 break
 
     def draw42(self, center: tuple[int, int]) -> None:
+        """Place a valid 42-pattern obstacle while preserving entry/exit.
 
+        Args:
+            center (tuple[int, int]): Preferred center coordinate.
+
+        Returns:
+            None
+        """
         self.__try_to_draw42(center)
 
         for coord in self.coords42:  # only enter if 42 has been drawed

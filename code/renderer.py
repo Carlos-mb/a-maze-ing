@@ -2,9 +2,24 @@ import maze
 import os
 
 
-class Renderer():
+class Renderer:
+    """Render and interact with a maze in text mode.
+
+    Attributes:
+        ascii (bool): Whether ASCII rendering mode is enabled.
+        maze (maze.Maze): Maze instance managed by the renderer.
+    """
 
     def __init__(self, maze_obj: maze.Maze, ascii: bool = True) -> None:
+        """Initialize renderer and generate maze layout.
+
+        Args:
+            maze_obj (maze.Maze): Maze object to render.
+            ascii (bool): Enable ASCII mode.
+
+        Returns:
+            None
+        """
         self.ascii: bool = ascii
         self.maze: maze.Maze = maze_obj
         maze_obj.do_perfect()
@@ -12,6 +27,15 @@ class Renderer():
             maze_obj.unperfect()
 
     def newcoordX(self, row: int, col: int) -> bool:
+        """Move exit coordinate if target cell is valid.
+
+        Args:
+            row (int): Target row.
+            col (int): Target column.
+
+        Returns:
+            bool: `True` if exit was updated, else `False`.
+        """
         if (self.maze.cell_exist(row, col) and
            (row, col) != (self.maze.entry[0], self.maze.entry[1])):
             self.maze.exit = (row, col)
@@ -19,6 +43,15 @@ class Renderer():
         return False
 
     def newcoordE(self, row: int, col: int) -> bool:
+        """Move entry coordinate if target cell is valid.
+
+        Args:
+            row (int): Target row.
+            col (int): Target column.
+
+        Returns:
+            bool: `True` if entry was updated, else `False`.
+        """
         if (self.maze.cell_exist(row, col) and
            (row, col) != (self.maze.exit[0], self.maze.exit[1])):
             self.maze.entry = (row, col)
@@ -26,6 +59,14 @@ class Renderer():
         return False
 
     def __render_ascii__(self) -> None:
+        """Run interactive ASCII render loop.
+
+        Handles keyboard commands for regeneration, path toggle,
+        entry/exit movement, and maze resizing.
+
+        Returns:
+            None
+        """
         os.system("clear")
         self.maze.draw()
         path: bool = False
@@ -98,5 +139,10 @@ class Renderer():
                 self.maze.draw()
 
     def render(self) -> None:
+        """Render maze using the configured backend.
+
+        Returns:
+            None
+        """
         if True:
             self.__render_ascii__()

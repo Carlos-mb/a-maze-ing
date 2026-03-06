@@ -5,6 +5,16 @@ from typing import cast
 
 
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
+    """Read and validate maze configuration from a file path in CLI args.
+
+    The function expects exactly one CLI argument: the config file path.
+    It parses `KEY=VALUE` pairs, applies defaults, converts values to typed
+    fields, and validates coordinate bounds.
+
+    Returns:
+        dict[str, str | int | tuple[int, int]] | None:
+            A normalized configuration dictionary if valid, otherwise `None`.
+    """
 
     output: dict = {}
 
@@ -87,7 +97,14 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
 
 def main() -> None:
+    """Run the maze application entry point.
 
+    Reads configuration, builds a [`maze.Maze`](code/maze.py), initializes
+    a [`renderer.Renderer`](code/renderer.py), and starts rendering.
+
+    Returns:
+        None
+    """
     config: dict[str, str | int | tuple[int, int]] | None = read_config()
     if config is None:
         return
