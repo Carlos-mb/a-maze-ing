@@ -1,6 +1,7 @@
 from maze import Maze
 from renderer import Renderer
 import sys
+from typing import cast
 
 
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
@@ -85,27 +86,28 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
     return output
 
 
-def main():
+def main() -> None:
 
     config: dict[str, str | int | tuple[int, int]] | None = read_config()
     if config is None:
         return
 
     try:
-        mz = Maze(cols=config["WIDTH"],
-                  rows=config["HEIGHT"],
-                  seed=config["SEED"],
-                  perfect=config["PERFECT"],
-                  entry=config["ENTRY"],
-                  exit=config["EXIT"])
 
-        mz.showdraw = config["SHOWDRAW"]
+        mz: Maze = Maze(cols=cast(int, config["WIDTH"]),
+                        rows=cast(int, config["HEIGHT"]),
+                        seed=cast(int, config["SEED"]),
+                        perfect=cast(bool, config["PERFECT"]),
+                        entry=cast(tuple[int, int], config["ENTRY"]),
+                        exit=cast(tuple[int, int], config["EXIT"]))
+
+        mz.showdraw = cast(bool, config["SHOWDRAW"])
 
         # mz.do_perfect()
         # mz.unperfect()
         # mz.draw()
 
-        render = Renderer(mz)
+        render: Renderer = Renderer(mz)
         render.render()
     except KeyboardInterrupt:
         print("\nInterrupted by user")

@@ -4,12 +4,12 @@ import os
 
 class Renderer():
 
-    def __init__(self, maze: maze.Maze, ascii: bool = True):
-        self.ascii = ascii
-        self.maze = maze
-        maze.do_perfect()
-        if not maze.perfect:
-            maze.unperfect()
+    def __init__(self, maze_obj: maze.Maze, ascii: bool = True) -> None:
+        self.ascii: bool = ascii
+        self.maze: maze.Maze = maze_obj
+        maze_obj.do_perfect()
+        if not maze_obj.perfect:
+            maze_obj.unperfect()
 
     def newcoordX(self, row: int, col: int) -> bool:
         if (self.maze.cell_exist(row, col) and
@@ -25,14 +25,14 @@ class Renderer():
             return True
         return False
 
-    def __render_ascii__(self):
+    def __render_ascii__(self) -> None:
         os.system("clear")
         self.maze.draw()
-        path = False
+        path: bool = False
 
         while True:
             try:
-                cmd = input("[r] regenerate  [p] path  [q] quit: ")
+                cmd: str = input("[r] regenerate  [p] path  [q] quit: ")
             except EOFError:
                 break
             except KeyboardInterrupt:
@@ -43,6 +43,8 @@ class Renderer():
                 break
             elif cmd == "r":
                 self.maze.redo()
+            elif cmd == "s":
+                self.maze.showdraw = not self.maze.showdraw
             elif cmd == "p":
                 path = not path
             elif cmd.startswith("k"):
@@ -75,7 +77,7 @@ class Renderer():
                 self.maze.redo()
             else:
                 try:
-                    number = int(cmd)
+                    number: int = int(cmd)
                     if (self.maze.entry[0] < number and
                             self.maze.entry[1] < number and
                             self.maze.exit[0] < number and
