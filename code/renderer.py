@@ -23,9 +23,6 @@ class Renderer:
         """
         self.ascii: bool = ascii
         self.maze: maze.Maze = maze_obj
-        maze_obj.do_perfect()
-        if not maze_obj.perfect:
-            maze_obj.unperfect()
 
     def newcoordX(self, row: int, col: int) -> bool:
         """Move exit coordinate if target cell is valid.
