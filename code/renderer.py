@@ -83,7 +83,7 @@ class Renderer:
 
         while True:
             try:
-                cmd: str = input("[r] regenerate  [p] path  [q] quit: ")
+                cmd: str = input("[r]egen [p]ath  [c]olor [s]how [q]uit: ")
             except EOFError:
                 break
             except KeyboardInterrupt:
@@ -98,21 +98,21 @@ class Renderer:
                 self.maze.showdraw = not self.maze.showdraw
             elif cmd == "p":
                 path = not path
-            elif cmd.startswith("k"):
+            elif cmd == '\x1b[1;2C':
                 self.newcoordX(self.maze.exit[0], self.maze.exit[1] + 1)
-            elif cmd.startswith("j"):
+            elif cmd == '\x1b[1;2D':
                 self.newcoordX(self.maze.exit[0], self.maze.exit[1] - 1)
-            elif cmd.startswith("m"):
+            elif cmd == '\x1b[1;2B':
                 self.newcoordX(self.maze.exit[0] + 1, self.maze.exit[1])
-            elif cmd.startswith("i"):
+            elif cmd == '\x1b[1;2A':
                 self.newcoordX(self.maze.exit[0] - 1, self.maze.exit[1])
-            elif cmd.startswith("K"):
+            elif cmd == '\x1b[1;5C':
                 self.newcoordE(self.maze.entry[0], self.maze.entry[1] + 1)
-            elif cmd.startswith("J"):
+            elif cmd == '\x1b[1;5D':
                 self.newcoordE(self.maze.entry[0], self.maze.entry[1] - 1)
-            elif cmd.startswith("M"):
+            elif cmd == '\x1b[1;5B':
                 self.newcoordE(self.maze.entry[0] + 1, self.maze.entry[1])
-            elif cmd.startswith("I"):
+            elif cmd == '\x1b[1;5A':
                 self.newcoordE(self.maze.entry[0] - 1, self.maze.entry[1])
             elif cmd == '\x1b[C':
                 self.maze.cols += 1
@@ -134,6 +134,8 @@ class Renderer:
                 self.maze.get_path()
             else:
                 self.maze.draw()
+
+        print(cmd)
 
     def render(self) -> None:
         """Render maze using the configured backend.

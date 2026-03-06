@@ -205,8 +205,7 @@ class Maze:
         else:
             self.exit = exit
         self.outputfile: str = outputfile
-        # self.color: str = "\033[0m"
-        self.color = "\033[95m"
+        self.color: str = "\033[0m"        
 
     def draw(self, pos: Cell | None = None, path: list[Cell] | None = None) -> None:
         """Draw maze in terminal.
