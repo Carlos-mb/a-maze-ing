@@ -306,9 +306,12 @@ class MazeGenerator:
         Returns:
             None
         """
+
+        changed: bool = False
+
         # Enumarete generates a tupla of pairs [0, value1], [1, value2]
         for i, row in enumerate(self.matrix):  # [1:-1]
-            if i % 2 == 0 or self.rows == 2:
+            if i % 2 == 0:
                 cell: Cell = self.rnd.choice(row)  # [1:-1]
                 while cell in self.coords42:
                     cell = self.rnd.choice(row)  # [1:-1]
@@ -316,7 +319,22 @@ class MazeGenerator:
                     wall for wall in Wall if cell.walls & wall]
                 if closed:
                     # cell._open_wall(self.rnd.choice(closed))
+                    walls = cell.walls
                     cell._open_wall(self.rnd.choice(closed))
+                    changed = walls != cell.walls
+
+        if not changed:  # Extreme situations
+            for row in self.matrix:
+                for cell in row:
+                    if cell not in self.coords42:
+                        walls = cell.walls
+                        cell._open_wall(Wall.N)
+                        cell._open_wall(Wall.E)
+                        cell._open_wall(Wall.S)
+                        cell._open_wall(Wall.W)
+                        changed = walls != cell.walls
+                        if changed:
+                            return
 
     def _do_perfect(self) -> None:
         """Generate a perfect maze.

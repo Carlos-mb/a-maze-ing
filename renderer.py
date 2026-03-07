@@ -104,7 +104,7 @@ class Renderer:
 
                 content: str
                 if cell == pos and not path:
-                    content = color2 + " X " + color0
+                    content = color2 + " 0 " + color0
                 elif cell in path:
                     if (r, c) == maze.entry:
                         content = color1 + " E " + color0

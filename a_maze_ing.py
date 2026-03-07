@@ -4,6 +4,7 @@ import sys
 from typing import cast
 import os
 
+
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
     """Read and validate maze configuration from a file path in CLI args.
 
@@ -162,8 +163,8 @@ def main() -> None:
                                     showdraw=cast(bool, config["SHOWDRAW"]))
         filename: str = cast(str, config["OUTPUT_FILE"])
         export_file(mz, filename)
-        if os.path.exists(filename):
-            print("File created: "+filename)
+        # if os.path.exists(filename):
+        #     print("File created: "+filename)
         render.render()
 
     except KeyboardInterrupt:

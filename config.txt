@@ -1,8 +1,8 @@
 # All coordinates are in (col, row) format. 0,0 is the top left.
-WIDTH=6
-HEIGHT=6
-ENTRY=0,1
-EXIT=2,2
+WIDTH=2
+HEIGHT=3
+ENTRY=0,0
+EXIT=0,0
 OUTPUT_FILE=maze.txt
 #PERFECT=True warranty perfect. Flase does not warranty imperfect maze
 PERFECT=False
