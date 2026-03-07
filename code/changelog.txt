@@ -1,10 +1,18 @@
 - maze.redo pasa a llamarse maze.create y se debe emplear para inicializar el maze antes de usarlo
 - maze.redo ya no crea un nuevo Random, eso debe hacerse desde fuera del maze, asignando maze.rnd a otro Random
 - do_perfect cambia las coordenadas del centro en (-1, -1) para facilitar que el 42 aparezca en laberintos de 5x5, pegado a la izq.
-
-
+----------------
+- maze.py  →  maze_generator.py
+- Maze -> MazeGenerator
+- maze -> Añadidos valores por defecto a rows y cols 
+- Adaptado renderer a este cambio
+- Solucionado bug al encoger tamaño del lab cuando entry o exit se quedaban fuera
+- README.md 
 
 Faltan: 
 
 Instrucciones para poder usar el entorno gráfico
 Intrucciones generales de usarlo
+Revisar README
+Revisar Makefile (no está actualizado ni probado)
+Cambiar estructura de directorios para dejar el repo definitivo

@@ -1,4 +1,4 @@
-from maze import Maze
+from maze import MazeGenerator
 from renderer import Renderer
 import sys
 from typing import cast
@@ -118,23 +118,19 @@ def main() -> None:
 
     try:
 
-        mz: Maze = Maze(cols=cast(int, config["WIDTH"]),
-                        rows=cast(int, config["HEIGHT"]),
-                        seed=cast(int, config["SEED"]),
-                        perfect=cast(bool, config["PERFECT"]),
-                        entry=cast(tuple[int, int], config["ENTRY"]),
-                        exit=cast(tuple[int, int], config["EXIT"]),
-                        outputfile=cast(str, config["OUTPUT_FILE"]),
-                        speed=cast(int, config["CAMERA_SPEED"]),
-                        canv_w=cast(int, config["CANVAS_WIDTH"]),
-                        canv_h=cast(int, config["CANVAS_HEIGHT"]))
+        mz: MazeGenerator = MazeGenerator(
+            cols=cast(int, config["WIDTH"]),
+            rows=cast(int, config["HEIGHT"]),
+            seed=cast(int, config["SEED"]),
+            perfect=cast(bool, config["PERFECT"]),
+            entry=cast(tuple[int, int], config["ENTRY"]),
+            exit=cast(tuple[int, int], config["EXIT"]),
+            outputfile=cast(str, config["OUTPUT_FILE"]),
+            speed=cast(int, config["CAMERA_SPEED"]),
+            canv_w=cast(int, config["CANVAS_WIDTH"]),
+            canv_h=cast(int, config["CANVAS_HEIGHT"]))
 
         mz.showdraw = cast(bool, config["SHOWDRAW"])
-
-        # mz.do_perfect()
-        # mz.unperfect()
-        # mz.draw()
-
         graphic_mode = cast(str, config["GRAPHIC_MODE"])
         is_ascii = graphic_mode == "ASCII"
         render: Renderer = Renderer(mz, ascii=is_ascii)

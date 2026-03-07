@@ -154,7 +154,7 @@ class Cell:
         return format(int(self.walls), "X")
 
 
-class Maze:
+class MazeGenerator:
     """Generate, mutate, and solve a maze.
 
     Attributes:
@@ -167,8 +167,8 @@ class Maze:
 
     def __init__(
         self,
-        rows: int,
-        cols: int,
+        rows: int = 10,
+        cols: int = 10,
         seed: int = 94,
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
