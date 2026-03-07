@@ -1,3 +1,20 @@
+"""
+MazeGenerator reusable module.
+
+Example usage:
+
+    from mazegen.generator import MazeGenerator
+
+    gen = MazeGenerator(rows=20, cols=20, seed=42)
+    maze = gen.generate()
+
+    path = gen.solve()
+
+Access structure:
+
+    maze.matrix
+"""
+
 from enum import IntFlag
 import random
 import os
@@ -47,7 +64,7 @@ class Cell:
         Wall.W: Wall.E
     }
 
-    def __init__(self, row: int, col: int, maze: "Maze") -> None:
+    def __init__(self, row: int, col: int, maze: "MazeGenerator") -> None:
         """Initialize a cell.
 
         Args:
@@ -58,7 +75,7 @@ class Cell:
         Returns:
             None
         """
-        self.maze: Maze = maze
+        self.maze: MazeGenerator = maze
         self.row: int = row
         self.col: int = col
 
@@ -67,7 +84,7 @@ class Cell:
         # Walls. Byte OR of 0001, 0010, 0100 and 1000
         self.walls: int = Wall.N | Wall.E | Wall.S | Wall.W
 
-    def notvisited(self) -> list["Cell"]:
+    def _notvisited(self) -> list["Cell"]:
         """Return unvisited neighbor cells excluding blocked pattern cells.
 
         Returns:
@@ -95,7 +112,7 @@ class Cell:
 
         return (neighbors)
 
-    def open_wall(self, wall: Wall) -> None:
+    def _open_wall(self, wall: Wall) -> None:
         """Open one wall in this cell and opposite wall in adjacent cell.
 
         Args:
@@ -109,7 +126,7 @@ class Cell:
         neighbor_col: int = self.col + Cell.relative[wall][1]
 
         # If there is a valid neighbor
-        if (self.maze.cell_exist(neighbor_row, neighbor_col)):
+        if (self.maze._cell_exist(neighbor_row, neighbor_col)):
 
             # Open my wall
             self.walls &= ~wall  # Open the wall doing "and not wall.X"
@@ -118,7 +135,7 @@ class Cell:
             self.maze.matrix[neighbor_row][neighbor_col].walls\
                 &= ~self.oposite_wall[wall]
 
-    def able_neighbors(self) -> list["Cell"]:
+    def _able_neighbors(self) -> list["Cell"]:
         """Return traversable unvisited neighbors via open walls.
 
         Returns:
@@ -172,8 +189,7 @@ class MazeGenerator:
         seed: int = 94,
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
-        exit: tuple[int, int] | None = None,
-        outputfile: str = "",
+        exit: tuple[int, int] | None = None,        
         speed: int = 32,
         canv_w: int = 1920,
         canv_h: int = 1080
@@ -207,13 +223,15 @@ class MazeGenerator:
             self.exit: tuple[int, int] = (rows - 1, cols - 1)
         else:
             self.exit = exit
-        self.outputfile: str = outputfile
         self.speed: int = speed
         self.canv_w: int = canv_w
         self.canv_h: int = canv_h
         self.color: str = "\033[0m"
+        self.directions: str = ""
 
-    def draw(self, pos: Cell | None = None, path: list[Cell] | None = None) -> None:
+    def draw(self,
+             pos: Cell | None = None,
+             path: list[Cell] | None = None) -> None:
         """Draw maze in terminal.
 
         Args:
@@ -302,7 +320,7 @@ class MazeGenerator:
                 line += "╝"
         print(line + color_reset)
 
-    def cell_exist(self, row: int, col: int) -> bool:
+    def _cell_exist(self, row: int, col: int) -> bool:
         """Check whether a coordinate is inside bounds and not blocked.
 
         Args:
@@ -316,7 +334,7 @@ class MazeGenerator:
                 row < self.rows and col < self.cols
                 and self.matrix[row][col] not in self.coords42)
 
-    def connect(self, origin: Cell, destination: Cell) -> None:
+    def _connect(self, origin: Cell, destination: Cell) -> None:
         """Open wall between two adjacent cells.
 
         Args:
@@ -327,17 +345,17 @@ class MazeGenerator:
             None
         """
         if destination.row > origin.row:
-            origin.open_wall(Wall.S)
+            origin._open_wall(Wall.S)
         elif destination.row < origin.row:
-            origin.open_wall(Wall.N)
+            origin._open_wall(Wall.N)
         elif destination.col > origin.col:
-            origin.open_wall(Wall.E)
+            origin._open_wall(Wall.E)
         elif destination.col < origin.col:
-            origin.open_wall(Wall.W)
+            origin._open_wall(Wall.W)
         else:
             raise ValueError("Cells are not adjacent")
 
-    def tunnel(self, cell: Cell) -> None:
+    def _tunnel(self, cell: Cell) -> None:
         """Recursively carve maze passages from a cell.
 
         Args:
@@ -347,7 +365,7 @@ class MazeGenerator:
             None
         """
         cell.visited = True
-        neighbors: list[Cell] = cell.notvisited()
+        neighbors: list[Cell] = cell._notvisited()
 
         if self.showdraw:
             os.system("clear")
@@ -356,10 +374,10 @@ class MazeGenerator:
 
         if len(neighbors) > 0:
             dest: Cell = self.rnd.choice(neighbors)
-            self.connect(cell, dest)
-            self.tunnel(dest)
+            self._connect(cell, dest)
+            self._tunnel(dest)
 
-    def pending_neighbors(self) -> list[Cell]:
+    def _pending_neighbors(self) -> list[Cell]:
         """Collect visited cells that still have unvisited neighbors.
 
         Returns:
@@ -370,12 +388,12 @@ class MazeGenerator:
             for cell in row:
                 # If cell is visited and had no visited neighbors
                 if cell.visited:
-                    if len(cell.notvisited()) > 0:
+                    if len(cell._notvisited()) > 0:
                         if cell not in self.coords42:
                             notvisited.append(cell)
         return list(notvisited)
 
-    def unperfect(self) -> None:
+    def _unperfect(self) -> None:
         """Open extra walls to make the maze imperfect.
 
         Returns:
@@ -390,27 +408,26 @@ class MazeGenerator:
                 closed: list[Wall] = [
                     wall for wall in Wall if cell.walls & wall]
                 if closed:
-                    # cell.open_wall(self.rnd.choice(closed))
-                    cell.open_wall(self.rnd.choice(closed))
+                    # cell._open_wall(self.rnd.choice(closed))
+                    cell._open_wall(self.rnd.choice(closed))
 
-    def do_perfect(self) -> None:
+    def _do_perfect(self) -> None:
         """Generate a perfect maze.
 
         Returns:
             None
         """
         start: Cell = self.matrix[0][0]
-        self.draw42(((self.rows - 1) // 2, (self.cols - 1) // 2))
-        self.tunnel(start)
+        self._draw42(((self.rows - 1) // 2, (self.cols - 1) // 2))
+        self._tunnel(start)
 
         # while any(not cell.visited for row in self.matrix for cell in row):
-        pendings: list[Cell] = self.pending_neighbors()
+        pendings: list[Cell] = self._pending_neighbors()
         while pendings:
-            self.tunnel(self.rnd.choice(pendings))
-            pendings = self.pending_neighbors()
-            # self.tunnel(self.rnd.choice([self.pending_neighbors()]))
+            self._tunnel(self.rnd.choice(pendings))
+            pendings = self._pending_neighbors()
 
-    def create(self) -> None:
+    def generate(self) -> None:
         """Regenerate maze with current dimensions/options.
 
         Returns:
@@ -421,12 +438,12 @@ class MazeGenerator:
             [[Cell(row=row, col=col, maze=self)
               for col in range(self.cols)]
                 for row in range(self.rows)])
-        self.do_perfect()
+        self._do_perfect()
         if not self.perfect:
-            self.unperfect()    
+            self._unperfect()
 
-    def get_path(self) -> None:
-        """Compute and draw shortest path from entry to exit.
+    def solve(self) -> None:
+        """Calculate shortest path from entry to exit.
 
         Returns:
             None
@@ -455,7 +472,7 @@ class MazeGenerator:
                 time.sleep(0.1)
 
             current = queue.popleft()
-            neighbors: list[Cell] = current.able_neighbors()
+            neighbors: list[Cell] = current._able_neighbors()
             if neighbors:
                 for next in neighbors:
                     queue.append(next)
@@ -472,7 +489,7 @@ class MazeGenerator:
             path.append(parents[current])
             current = parents[current]
 
-        self.draw(path=path)
+        # self.draw(path=path)
 
         # Create directions from path
         directions: str = ""
@@ -488,12 +505,11 @@ class MazeGenerator:
                     if wall_name:
                         directions += (wall_name)
                     break
-        
-        self.export_file(directions)
 
+        self.directions = directions
         self.shortest_path = path
 
-    def __try_to_draw42(self, center: tuple[int, int]) -> None:
+    def _try_to_draw42(self, center: tuple[int, int]) -> None:
         """Try placing the 42-pattern obstacle centered at given coordinates.
 
         Args:
@@ -526,13 +542,13 @@ class MazeGenerator:
         for dr, dc in pattern:
             rr: int = r + dr
             cc: int = c + dc
-            if self.cell_exist(rr, cc):
+            if self._cell_exist(rr, cc):
                 self.coords42.append(self.matrix[rr][cc])
             else:
                 self.coords42 = []
                 break
 
-    def draw42(self, center: tuple[int, int]) -> None:
+    def _draw42(self, center: tuple[int, int]) -> None:
         """Place a valid 42-pattern obstacle while preserving entry/exit.
 
         Args:
@@ -541,7 +557,7 @@ class MazeGenerator:
         Returns:
             None
         """
-        self.__try_to_draw42(center)
+        self._try_to_draw42(center)
 
         for coord in self.coords42:  # only enter if 42 has been drawed
             if ((coord.row, coord.col) == self.entry or
@@ -550,7 +566,7 @@ class MazeGenerator:
 
                 for row in self.matrix:  # no [3:] -> Good for any pattern size
                     for cell in row:
-                        self.__try_to_draw42((cell.row, cell.col))
+                        self._try_to_draw42((cell.row, cell.col))
 
                         for coord in self.coords42:
                             if ((coord.row, coord.col) == self.entry or
@@ -565,30 +581,6 @@ class MazeGenerator:
                 break
         for cell in self.coords42:
             cell.visited = True
-
-    def matrix_to_hex(self) -> list[str]:
-
-        hex_matrix: list[str] = []
-
-        for row in self.matrix:
-            hex_matrix.append("")
-            for cell in row:
-                hex_matrix[-1] += cell.to_hex()
-
-        return hex_matrix
-
-    def export_file(self, directions: str) -> None:
-        hex_matrix = self.matrix_to_hex()
-
-        if self.outputfile != "":
-            with open(self.outputfile, "w") as f:
-                for row in hex_matrix:
-                    f.write(row + "\n")
-                f.write("\n")
-                f.write(str(self.entry[1]) + "," + str(self.entry[0]) + "\n")
-                f.write(str(self.exit[1]) + "," + str(self.exit[0]) + "\n")
-                f.write(directions + "\n")
-
 
     def is_wall(self, row: int, col: int) -> bool:
 

@@ -1,4 +1,4 @@
-import maze
+from mazegen.generator import MazeGenerator
 import os
 import random
 import sys
@@ -23,7 +23,7 @@ class Renderer:
         maze (maze.Maze): Maze instance managed by the renderer.
     """
 
-    def __init__(self, maze_obj: maze.MazeGenerator, ascii: bool = True) -> None:
+    def __init__(self, maze_obj: MazeGenerator, ascii: bool = True) -> None:
         """Initialize renderer and generate maze layout.
 
         Args:
@@ -34,12 +34,12 @@ class Renderer:
             None
         """
         self.ascii: bool = ascii
-        self.maze: maze.MazeGenerator = maze_obj
+        self.maze: MazeGenerator = maze_obj
 
         self.mlx_core: Any = None
         self.mlx_ptr: Any = None
         self.win_ptr: Any = None
-        
+
         self.wall_sprites: dict[int, Any] = {}
         self.t_42: Any = None
         self.t_walk: Any = None
@@ -104,7 +104,7 @@ class Renderer:
         ]
 
         os.system("clear")
-        self.maze.create()
+        self.maze.generate()
         self.maze.draw()
         path: bool = False
         cmd: str = ""
@@ -122,7 +122,7 @@ class Renderer:
                 break
             elif cmd == "r":
                 self.maze.rnd = random.Random()
-                self.maze.create()
+                self.maze.generate()
             elif cmd == "s":
                 self.maze.showdraw = not self.maze.showdraw
             elif cmd == "p":
@@ -145,57 +145,56 @@ class Renderer:
                 self.newcoordE(self.maze.entry[0] - 1, self.maze.entry[1])
             elif cmd == '\x1b[C':
                 self.maze.cols += 1
-                self.maze.create()
+                self.maze.generate()
             elif cmd == '\x1b[D':
                 self.maze.cols = max(self.maze.cols - 1,
                                      2,
                                      self.maze.entry[1] + 1,
                                      self.maze.exit[1] + 1
                                      )
-                self.maze.create()
+                self.maze.generate()
             elif cmd == '\x1b[B':
                 self.maze.rows += 1
-                self.maze.create()
+                self.maze.generate()
             elif cmd == '\x1b[A':
                 self.maze.rows = max(self.maze.rows - 1,
                                      2,
                                      self.maze.entry[0] + 1,
                                      self.maze.exit[0] + 1
                                      )                                      
-                self.maze.create()
+                self.maze.generate()
             elif cmd == "c":
                 self.maze.color = random.choice(
                     [c for c in colors if c != self.maze.color])
             os.system("clear")
             if path:
-                self.maze.get_path()
+                self.maze.solve()
             else:
                 self.maze.draw()
 
         print(cmd)
 
-
     def load_resources(self) -> None:
-            """Carga los XPM una vez que MLX está inicializado."""
-            base_dir = os.path.dirname(os.path.dirname(__file__))
-            img_dir = os.path.join(base_dir, "img")
+        """Carga los XPM una vez que MLX está inicializado."""
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        img_dir = os.path.join(base_dir, "img")
 
-            try:
-                for i in range(16):
-                    bit_str = format(i, '04b')
-                    path = os.path.join(img_dir, f"t_wall_{bit_str}.xpm")
-                    img = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, path)
-                    if not img or not img[0]:
-                        raise FileNotFoundError(f"No se pudo cargar {path}")
-                    self.wall_sprites[i] = img[0]
+        try:
+            for i in range(16):
+                bit_str = format(i, '04b')
+                path = os.path.join(img_dir, f"t_wall_{bit_str}.xpm")
+                img = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, path)
+                if not img or not img[0]:
+                    raise FileNotFoundError(f"No se pudo cargar {path}")
+                self.wall_sprites[i] = img[0]
 
-                self.t_42 = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_42.xpm"))[0]
-                self.t_walk = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_walk.xpm"))[0]
-                self.t_start = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_start.xpm"))[0]
-                self.t_end = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_end.xpm"))[0]
-            except Exception as e:
-                print(f"Error cargando recursos: {e}")
-                sys.exit(1)
+            self.t_42 = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_42.xpm"))[0]
+            self.t_walk = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_walk.xpm"))[0]
+            self.t_start = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_start.xpm"))[0]
+            self.t_end = self.mlx_core.mlx_xpm_file_to_image(self.mlx_ptr, os.path.join(img_dir, "t_end.xpm"))[0]
+        except Exception as e:
+            print(f"Error cargando recursos: {e}")
+            sys.exit(1)
 
     def draw_maze_mlx(self) -> None:
         self.mlx_core.mlx_clear_window(self.mlx_ptr, self.win_ptr)
@@ -256,26 +255,26 @@ class Renderer:
             if keycode in (65307, 53, 113): 
                 os._exit(0)
             
-            elif keycode == 114: # [R]egen
-                self.maze.redo()
+            elif keycode == 114:  # [R]egen
+                self.maze.generate()
                 self.maze.shortest_path = []
                 if self.show_path:
-                    self.maze.get_path()
+                    self.maze.solve()
 
-            elif keycode == 112: # [P]ath
+            elif keycode == 112:  # [P]ath
                 self.show_path = not self.show_path
-                if self.show_path: 
-                    self.maze.get_path()
+                if self.show_path:
+                    self.maze.solve()
                 else:
                     self.maze.shortest_path = []
-            
-            elif keycode == 65361: # Left
+        
+            elif keycode == 65361:  # Left
                 self.cam_x -= speed
-            elif keycode == 65363: # Right
+            elif keycode == 65363:  # Right
                 self.cam_x += speed
-            elif keycode == 65362: # Up
+            elif keycode == 65362:  # Up
                 self.cam_y -= speed
-            elif keycode == 65364: # Down
+            elif keycode == 65364:  # Down
                 self.cam_y += speed
 
             self.draw_maze_mlx()

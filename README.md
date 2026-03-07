@@ -153,7 +153,7 @@ from maze import MazeGenerator
 
 maze = MazeGenerator(rows=20, cols=20)
 maze.create()
-path = maze.get_path()
+path = maze.solve()
 ```
 
 ## Team and Project Management

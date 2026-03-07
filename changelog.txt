@@ -8,8 +8,19 @@
 - Adaptado renderer a este cambio
 - Solucionado bug al encoger tamaño del lab cuando entry o exit se quedaban fuera
 - README.md 
-
+---------------------
+Creado el módulo:
+- /mazegen
+- maze.py ->generator.py
+- Creado pyproyect.toml
+- Cambios en el código para usar el nuevo nombre MazeGenerator
+- export_file sacado de MazeGenerator a renderer
+- maze.create -> maze.generate
+- maze ya no hace draw. Mantengo el método, por no hacer reingeniería, pero .draw debería estar fuera del MazeGenerator. Lo que pasa es que lo usamos como bonus para mostrar la búsqueda del 
 Faltan: 
+
+* Arreglarar export_file para que funcioen fuera de MazeGenerator
+* getpath tiene un draw ¿Hay que quitarlo?
 
 Instrucciones para poder usar el entorno gráfico
 Intrucciones generales de usarlo

@@ -1,8 +1,8 @@
-from code.generator.maze import MazeGenerator
+from mazegen.generator import MazeGenerator
 from renderer import Renderer
 import sys
 from typing import cast
-
+import os
 
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
     """Read and validate maze configuration from a file path in CLI args.
@@ -103,6 +103,30 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
     return output
 
 
+def export_file(maze: MazeGenerator, outputfile: str) -> None:
+
+    directions = maze.directions
+
+    if not maze or directions == "":
+        return
+
+    hex_matrix: list[str] = []
+
+    for row in maze.matrix:
+        hex_matrix.append("")
+        for cell in row:
+            hex_matrix[-1] += cell.to_hex()
+
+    if outputfile != "":
+        with open(outputfile, "w") as f:
+            for row in hex_matrix:
+                f.write(row + "\n")
+            f.write("\n")
+            f.write(str(maze.entry[1]) + "," + str(maze.entry[0]) + "\n")
+            f.write(str(maze.exit[1]) + "," + str(maze.exit[0]) + "\n")
+            f.write(directions + "\n")
+
+
 def main() -> None:
     """Run the maze application entry point.
 
@@ -125,7 +149,6 @@ def main() -> None:
             perfect=cast(bool, config["PERFECT"]),
             entry=cast(tuple[int, int], config["ENTRY"]),
             exit=cast(tuple[int, int], config["EXIT"]),
-            outputfile=cast(str, config["OUTPUT_FILE"]),
             speed=cast(int, config["CAMERA_SPEED"]),
             canv_w=cast(int, config["CANVAS_WIDTH"]),
             canv_h=cast(int, config["CANVAS_HEIGHT"]))
@@ -134,7 +157,12 @@ def main() -> None:
         graphic_mode = cast(str, config["GRAPHIC_MODE"])
         is_ascii = graphic_mode == "ASCII"
         render: Renderer = Renderer(mz, ascii=is_ascii)
+        filename: str = cast(str, config["OUTPUT_FILE"])
+        export_file(mz, filename)
+        if os.path.exists(filename):
+            print("File created: "+filename)
         render.render()
+
     except KeyboardInterrupt:
         print("\nInterrupted by user")
     except Exception as e:
