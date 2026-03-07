@@ -152,7 +152,7 @@ class Renderer:
             else:
                 line += "╝"
         print(line + color_reset)
-        time.sleep(0.1)
+    time.sleep(0.1)
 
 
     def newcoordX(self, row: int, col: int) -> bool:

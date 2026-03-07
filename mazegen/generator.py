@@ -20,6 +20,7 @@ import random
 import os
 import time
 import collections
+from typing import Callable
 
 
 class Wall(IntFlag):
@@ -189,7 +190,7 @@ class MazeGenerator:
         seed: int = 94,
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
-        exit: tuple[int, int] | None = None,        
+        exit: tuple[int, int] | None = None,
         speed: int = 32,
         canv_w: int = 1920,
         canv_h: int = 1080
@@ -215,7 +216,7 @@ class MazeGenerator:
             [[Cell(row=row, col=col, maze=self)
               for col in range(cols)]
                 for row in range(rows)])
-        self.showdraw: bool = False
+        self.showdraw: Callable | None = None
         self.shortest_path: list[Cell] = []
         self.coords42: list[Cell] = []
         self.entry: tuple[int, int] = entry
@@ -226,99 +227,7 @@ class MazeGenerator:
         self.speed: int = speed
         self.canv_w: int = canv_w
         self.canv_h: int = canv_h
-        self.color: str = "\033[0m"
         self.directions: str = ""
-
-    def draw(self,
-             pos: Cell | None = None,
-             path: list[Cell] | None = None) -> None:
-        """Draw maze in terminal.
-
-        Args:
-            pos (Cell | None): Optional highlighted position.
-            path (list[Cell] | None): Optional path to highlight.
-
-        Returns:
-            None
-        """
-        if path is None:
-            path = []
-
-        color_reset = "\033[0m"
-        # color0: str = "\033[0m"
-        color0: str = self.color
-        color1: str = "\033[92m"
-        color2: str = "\033[91m"
-        color3: str = "\033[93m"
-        color4: str = "\033[94m"
-
-        line: str = self.color + "╔"
-        for c in range(self.cols):
-            line += "═══"
-            if c < self.cols - 1:
-                line += "╦"
-            else:
-                line += "╗"
-        print(line)
-
-        for r in range(self.rows):
-
-            # interior line
-            line = "║"
-            for c in range(self.cols):
-
-                cell: Cell = self.matrix[r][c]
-
-                content: str
-                if cell == pos and not path:
-                    content = color2 + " X " + color0
-                elif cell in path:
-                    if (r, c) == self.entry:
-                        content = color1 + " E " + color0
-                    elif (r, c) == self.exit:
-                        content = color2 + " X " + color0
-                    else:
-                        content = color3 + " * " + color0
-                elif cell in self.coords42:
-                    content = color4 + " # " + color0
-                else:
-                    content = "   "
-
-                line += content
-
-                if cell.walls & Wall.E:
-                    line += "║"
-                else:
-                    line += " "
-
-            print(line)
-
-            if r < self.rows - 1:
-                line = "╠"
-                for c in range(self.cols):
-
-                    cell = self.matrix[r][c]
-
-                    if cell.walls & Wall.S:
-                        line += "═══"
-                    else:
-                        line += "   "
-
-                    if c < self.cols - 1:
-                        line += "╬"
-                    else:
-                        line += "╣"
-
-                print(line)
-
-        line = "╚"
-        for c in range(self.cols):
-            line += "═══"
-            if c < self.cols - 1:
-                line += "╩"
-            else:
-                line += "╝"
-        print(line + color_reset)
 
     def _cell_exist(self, row: int, col: int) -> bool:
         """Check whether a coordinate is inside bounds and not blocked.
@@ -368,9 +277,7 @@ class MazeGenerator:
         neighbors: list[Cell] = cell._notvisited()
 
         if self.showdraw:
-            os.system("clear")
-            self.draw()
-            time.sleep(0.1)
+            self.showdraw()
 
         if len(neighbors) > 0:
             dest: Cell = self.rnd.choice(neighbors)
@@ -386,8 +293,8 @@ class MazeGenerator:
         notvisited: list[Cell] = []
         for row in self.matrix:
             for cell in row:
-                # If cell is visited and had no visited neighbors
-                if cell.visited:
+                # If cell exist, is visited and had no visited neighbors
+                if cell.visited and cell not in self.coords42:
                     if len(cell._notvisited()) > 0:
                         if cell not in self.coords42:
                             notvisited.append(cell)
@@ -417,8 +324,13 @@ class MazeGenerator:
         Returns:
             None
         """
-        start: Cell = self.matrix[0][0]
+
         self._draw42(((self.rows - 1) // 2, (self.cols - 1) // 2))
+
+        start: Cell = self.rnd.choice(
+            [cell for row in self.matrix for cell in row
+             if cell not in self.coords42])
+
         self._tunnel(start)
 
         # while any(not cell.visited for row in self.matrix for cell in row):
@@ -462,14 +374,11 @@ class MazeGenerator:
 
         while queue:
             if self.showdraw:
-                os.system("clear")
-                # create path
                 path: list[Cell] = [current]
                 while parents.get(current, False):
                     path.append(parents[current])
                     current = parents[current]
-                self.draw(current, path=path)
-                time.sleep(0.1)
+                self.showdraw(current, path=path)
 
             current = queue.popleft()
             neighbors: list[Cell] = current._able_neighbors()
@@ -536,7 +445,8 @@ class MazeGenerator:
         r: int
         c: int
         r, c = center
-        if self.cols - c < 2:
+        if (self.cols - c < 4 or
+                self.rows - r < 4):
             return
         self.coords42 = []
         for dr, dc in pattern:

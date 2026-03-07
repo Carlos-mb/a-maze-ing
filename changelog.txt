@@ -1,6 +1,9 @@
-- maze.redo pasa a llamarse maze.create y se debe emplear para inicializar el maze antes de usarlo
-- maze.redo ya no crea un nuevo Random, eso debe hacerse desde fuera del maze, asignando maze.rnd a otro Random
-- do_perfect cambia las coordenadas del centro en (-1, -1) para facilitar que el 42 aparezca en laberintos de 5x5, pegado a la izq.
+- maze.redo pasa a llamarse maze.create y se debe emplear para inicializar
+  el maze antes de usarlo
+- maze.redo ya no crea un nuevo Random, eso debe hacerse desde fuera del maze, 
+  asignando maze.rnd a otro Random
+- do_perfect cambia las coordenadas del centro en (-1, -1) para facilitar que 
+  el 42 aparezca en laberintos de 5x5, pegado a la izq.
 ----------------
 - maze.py  →  maze_generator.py
 - Maze -> MazeGenerator
@@ -16,14 +19,26 @@ Creado el módulo:
 - Cambios en el código para usar el nuevo nombre MazeGenerator
 - export_file sacado de MazeGenerator a renderer
 - maze.create -> maze.generate
-- maze ya no hace draw. Mantengo el método, por no hacer reingeniería, pero .draw debería estar fuera del MazeGenerator. Lo que pasa es que lo usamos como bonus para mostrar la búsqueda del 
+- maze ya no hace draw. 
+  Ahora es una función "Callable" pasada por parámetro a MazeGenerator para
+  que pueda hacer draw cuando dibuja el mapa o busca el path
+- Quitado .gitignore de .gitignore
+- No se permite crear el 42 si no se deja una fila y una col de margen. De lo
+  contrario, se quedan celdas inaccesibles que vuelven loco al algoritmo.
 Faltan: 
 
 * Arreglarar export_file para que funcioen fuera de MazeGenerator
 * getpath tiene un draw ¿Hay que quitarlo?
 
+Hay que quitar de MazeGenerator las referencias a la visuacización:
+        self.speed: int = speed
+        self.canv_w: int = canv_w
+        self.canv_h: int = canv_h
+  deben estar en el renderer
+
+Entrada y salida no pueden ser las mismas
 Instrucciones para poder usar el entorno gráfico
 Intrucciones generales de usarlo
-Revisar README
+Revisar README, han cambiado cosas del código y seguro que algo más
 Revisar Makefile (no está actualizado ni probado)
 Cambiar estructura de directorios para dejar el repo definitivo

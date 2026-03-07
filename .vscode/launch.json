@@ -10,7 +10,7 @@
 			"type": "debugpy",
 			"request": "launch",
 			"program": "${file}",
-			"cwd": "${workspaceFolder}/code",
+			"cwd": "${workspaceFolder}",
 			"console": "integratedTerminal",
 			"args": ["config.txt"]
 		}

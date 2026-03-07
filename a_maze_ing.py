@@ -1,4 +1,4 @@
-from mazegen.generator import MazeGenerator
+from mazegen.generator import MazeGenerator, Cell, Wall
 from renderer import Renderer
 import sys
 from typing import cast
@@ -90,10 +90,12 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
         output["SEED"] = int(output.get("SEED", "94"))
 
         output["GRAPHIC_MODE"] = output.get("GRAPHIC_MODE", "Mlx")
+
         if output["GRAPHIC_MODE"] not in ("ASCII", "Mlx"):
             raise ValueError("Error: GRAPHIC_MODE should be ASCII | Mlx")
 
-        output["CAMERA_SPEED"] = int(output.get("CAMERA_SPEED", "32"))
+        output["CAMERA_SPEED"] = int(output.get("CAMERA_SPEED", "32"
+                                                ))
         output["CANVAS_WIDTH"] = int(output.get("CANVAS_WIDTH", "1920"))
         output["CANVAS_HEIGHT"] = int(output.get("CANVAS_HEIGHT", "1080"))
     except ValueError as e:
@@ -153,10 +155,11 @@ def main() -> None:
             canv_w=cast(int, config["CANVAS_WIDTH"]),
             canv_h=cast(int, config["CANVAS_HEIGHT"]))
 
-        mz.showdraw = cast(bool, config["SHOWDRAW"])
         graphic_mode = cast(str, config["GRAPHIC_MODE"])
         is_ascii = graphic_mode == "ASCII"
-        render: Renderer = Renderer(mz, ascii=is_ascii)
+        render: Renderer = Renderer(mz,
+                                    ascii=is_ascii,
+                                    showdraw=cast(bool, config["SHOWDRAW"]))
         filename: str = cast(str, config["OUTPUT_FILE"])
         export_file(mz, filename)
         if os.path.exists(filename):

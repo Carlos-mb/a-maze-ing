@@ -3,7 +3,7 @@ import os
 import random
 import sys
 from typing import Any, Callable
-import time
+
 
 """
     # type: ignore makes a typo fix
@@ -56,8 +56,6 @@ class Renderer:
         speed: dict = {}
         self.color: str = "\033[0m"
         self.showdraw = showdraw
-        if showdraw:
-            self.maze.showdraw = self.draw
 
     def draw(self,
              pos: Cell | None = None,
@@ -73,7 +71,7 @@ class Renderer:
         """
 
         maze = self.maze
-        os.system("clear")
+
         if path is None:
             path = []
 
@@ -126,7 +124,7 @@ class Renderer:
 
             print(line)
 
-            if r < self.maze.rows - 1:
+            if r < self.maze - 1:
                 line = "╠"
                 for c in range(maze.cols):
 
@@ -152,7 +150,6 @@ class Renderer:
             else:
                 line += "╝"
         print(line + color_reset)
-        time.sleep(0.1)
 
 
     def newcoordX(self, row: int, col: int) -> bool:
@@ -207,7 +204,7 @@ class Renderer:
 
         os.system("clear")
         self.maze.generate()
-        self.draw()
+        self.drawer()
         path: bool = False
         cmd: str = ""
 
@@ -226,10 +223,7 @@ class Renderer:
                 self.maze.rnd = random.Random()
                 self.maze.generate()
             elif cmd == "s":
-                if self.maze.showdraw:
-                    self.maze.showdraw = None
-                else:
-                    self.maze.showdraw = self.draw
+                self.maze.showdraw = not self.maze.showdraw
             elif cmd == "p":
                 path = not path
             elif cmd == '\x1b[1;2C':
@@ -269,14 +263,13 @@ class Renderer:
                                      )                                      
                 self.maze.generate()
             elif cmd == "c":
-                self.color = random.choice(
-                    [c for c in colors if c != self.color])
+                self.maze.color = random.choice(
+                    [c for c in colors if c != self.maze.color])
             os.system("clear")
             if path:
                 self.maze.solve()
-                self.draw(path=self.maze.shortest_path)
             else:
-                self.draw()
+                self.maze.draw()
 
         print(cmd)
 
