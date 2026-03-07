@@ -400,7 +400,7 @@ class Maze:
             None
         """
         start: Cell = self.matrix[0][0]
-        self.draw42(((self.rows - 1) // 2, (self.cols - 1) // 2))
+        self.draw42(((self.rows) // 2, (self.cols) // 2))
         self.tunnel(start)
 
         # while any(not cell.visited for row in self.matrix for cell in row):

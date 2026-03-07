@@ -1,0 +1,10 @@
+- maze.redo pasa a llamarse maze.create y se debe emplear para inicializar el maze antes de usarlo
+- maze.redo ya no crea un nuevo Random, eso debe hacerse desde fuera del maze, asignando maze.rnd a otro Random
+- do_perfect cambia las coordenadas del centro en (-1, -1) para facilitar que el 42 aparezca en laberintos de 5x5, pegado a la izq.
+
+
+
+Faltan: 
+
+Instrucciones para poder usar el entorno gráfico
+Intrucciones generales de usarlo

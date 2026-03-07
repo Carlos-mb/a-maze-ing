@@ -1,14 +1,15 @@
 # All coordinates are in (col, row) format. 0,0 is the top left.
-WIDTH=80
-HEIGHT=50
-ENTRY=0,0
-EXIT=45, 45
+WIDTH=6
+HEIGHT=6
+ENTRY=0,1
+EXIT=0,2
 OUTPUT_FILE=maze.txt
 #PERFECT=True warranty perfect. Flase does not warranty imperfect maze
 PERFECT=False
 SEED=42
 SHOWDRAW=False
-GRAPHIC_MODE=Mlx
+#GRAPHIC_MODE=Mlx | ASCII
+GRAPHIC_MODE=ASCII
 CAMERA_SPEED=128
 CANVAS_WIDTH=1920
 CANVAS_HEIGHT=1080

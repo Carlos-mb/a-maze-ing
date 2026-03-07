@@ -103,6 +103,7 @@ class Renderer:
         ]
 
         os.system("clear")
+        self.maze.create()
         self.maze.draw()
         path: bool = False
         cmd: str = ""
@@ -119,7 +120,8 @@ class Renderer:
             if cmd == "q":
                 break
             elif cmd == "r":
-                self.maze.redo()
+                self.maze.rnd = random.Random()
+                self.maze.create()
             elif cmd == "s":
                 self.maze.showdraw = not self.maze.showdraw
             elif cmd == "p":
@@ -142,16 +144,16 @@ class Renderer:
                 self.newcoordE(self.maze.entry[0] - 1, self.maze.entry[1])
             elif cmd == '\x1b[C':
                 self.maze.cols += 1
-                self.maze.redo()
+                self.maze.create()
             elif cmd == '\x1b[D':
                 self.maze.cols = max(self.maze.cols - 1, 2)
-                self.maze.redo()
+                self.maze.create()
             elif cmd == '\x1b[B':
                 self.maze.rows += 1
-                self.maze.redo()
+                self.maze.create()
             elif cmd == '\x1b[A':
                 self.maze.rows = max(self.maze.rows - 1, 2)
-                self.maze.redo()
+                self.maze.create()
             elif cmd == "c":
                 self.maze.color = random.choice(
                     [c for c in colors if c != self.maze.color])
@@ -266,12 +268,12 @@ class Renderer:
                 self.cam_y -= speed
             elif keycode == 65364: # Down
                 self.cam_y += speed
-                    
+
             self.draw_maze_mlx()
 
         self.mlx_core.mlx_hook(self.win_ptr, 33, 0, lambda *a: os._exit(0), None)
         self.mlx_core.mlx_hook(self.win_ptr, 2, 1, key_hook, None)
-        
+
         self.draw_maze_mlx()
         self.mlx_core.mlx_loop(self.mlx_ptr)
 
