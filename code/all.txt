@@ -1,3 +1,145 @@
+==> a_maze_ing.py <==
+from maze import Maze
+from renderer import Renderer
+import sys
+from typing import cast
+
+
+def read_config() -> dict[str, str | int | tuple[int, int]] | None:
+    """Read and validate maze configuration from a file path in CLI args.
+
+    The function expects exactly one CLI argument: the config file path.
+    It parses `KEY=VALUE` pairs, applies defaults, converts values to typed
+    fields, and validates coordinate bounds.
+
+    Returns:
+        dict[str, str | int | tuple[int, int]] | None:
+            A normalized configuration dictionary if valid, otherwise `None`.
+    """
+
+    output: dict = {}
+
+    if len(sys.argv) != 2:
+        print("Usage: python3 a_maze_ing.py config.txt")
+        return None
+
+    try:
+        with open(sys.argv[1]) as f:
+            for i, line in enumerate(f, start=1):
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    if "=" not in line:
+                        msg = (
+                            f"Error: invalid config line {i}. "
+                            "Expected KEY=VALUE"
+                        )
+                        raise ValueError(msg)
+                    key, value = line.split("=", 1)
+                    output[key.strip()] = value.strip()
+
+    except FileNotFoundError:
+        print("ERROR: config file does not exist")
+        return None
+    except ValueError as e:
+        print(e)
+        return None
+    except Exception:
+        print("Undefined error. Usage: python3 a_maze_ing.py config.txt")
+        return None
+
+    try:
+        output["WIDTH"] = int(output.get("WIDTH", "20"))
+        output["HEIGHT"] = int(output.get("HEIGHT", "20"))
+        output["ENTRY"] = tuple(map(
+                                int, output.get("ENTRY", "0,0").split(",")))
+        if len(output["ENTRY"]) != 2:
+            raise ValueError("Error: ENTRY must be int, int")
+
+        if output["ENTRY"][0] < 0 or output["ENTRY"][1] < 0 or\
+           output["ENTRY"][0] > output["WIDTH"] - 1 or\
+           output["ENTRY"][1] > output["HEIGHT"] - 1:
+
+            raise ValueError("Error: ENTRY must be inside maze limits")
+
+        output["EXIT"] = tuple(map(int, output.get("EXIT", "0,0").split(",")))
+        if len(output["EXIT"]) != 2:
+            raise ValueError("Error: EXIT must be int, int")
+
+        if output["EXIT"][0] < 0 or output["EXIT"][1] < 0 or\
+           output["EXIT"][0] > output["WIDTH"] - 1 or\
+           output["EXIT"][1] > output["HEIGHT"] - 1:
+
+            raise ValueError("Error: EXIT must be inside maze limits")
+
+        # Not sure of this:
+        # if output["ENTRY"][0] == output["EXIT"][0] and\
+        #    output["ENTRY"][1] == output["EXIT"][1]:
+        #    raise ValueError("Error: ENTRY and EXIT must be different points")
+
+        output["OUTPUT_FILE"] = output.get("OUTPUT_FILE", "maze.txt")
+
+        output["PERFECT"] = output.get("PERFECT", "true").lower()
+        if output["PERFECT"] not in ("true", "false"):
+            raise ValueError("Error: PERFECT should be true | false")
+        output["PERFECT"] = output["PERFECT"] == "true"
+
+        output["SHOWDRAW"] = output.get("SHOWDRAW", "true").lower()
+        if output["SHOWDRAW"] not in ("true", "false"):
+            raise ValueError("Error: SHOWDRAW should be true | false")
+        output["SHOWDRAW"] = output["SHOWDRAW"] == "true"
+
+        output["SEED"] = int(output.get("SEED", "94"))
+
+    except ValueError as e:
+        print(e)
+        return None
+
+    return output
+
+
+def main() -> None:
+    """Run the maze application entry point.
+
+    Reads configuration, builds a [`maze.Maze`](code/maze.py), initializes
+    a [`renderer.Renderer`](code/renderer.py), and starts rendering.
+
+    Returns:
+        None
+    """
+    config: dict[str, str | int | tuple[int, int]] | None = read_config()
+    if config is None:
+        return
+
+    try:
+
+        mz: Maze = Maze(cols=cast(int, config["WIDTH"]),
+                        rows=cast(int, config["HEIGHT"]),
+                        seed=cast(int, config["SEED"]),
+                        perfect=cast(bool, config["PERFECT"]),
+                        entry=cast(tuple[int, int], config["ENTRY"]),
+                        exit=cast(tuple[int, int], config["EXIT"]),
+                        outputfile=cast(str, config["OUTPUT_FILE"]))
+
+        mz.showdraw = cast(bool, config["SHOWDRAW"])
+
+        # mz.do_perfect()
+        # mz.unperfect()
+        # mz.draw()
+
+        render: Renderer = Renderer(mz)
+        render.render()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user")
+    except Exception as e:
+        print(f"Runtime error: {e}")
+
+
+if __name__ == "__main__":
+    main()
+
+==> config.py <==
+
+==> maze.py <==
 from enum import IntFlag
 import random
 import os
@@ -173,10 +315,7 @@ class Maze:
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
         exit: tuple[int, int] | None = None,
-        outputfile: str = "",
-        speed: int = 32,
-        canv_w: int = 1920,
-        canv_h: int = 1080
+        outputfile: str = ""
     ) -> None:
         """Initialize maze grid and generation options.
 
@@ -208,10 +347,7 @@ class Maze:
         else:
             self.exit = exit
         self.outputfile: str = outputfile
-        self.speed: int = speed
-        self.canv_w: int = canv_w
-        self.canv_h: int = canv_h
-        self.color: str = "\033[0m"
+        self.color: str = "\033[0m"        
 
     def draw(self, pos: Cell | None = None, path: list[Cell] | None = None) -> None:
         """Draw maze in terminal.
@@ -502,30 +638,23 @@ class Maze:
         Returns:
             None
         """
-        # pattern: list[tuple[int, int]] = [
-        #     (-2, -3),                      (-2, +1), (-2, +2), (-2, +3),
-        #     (-1, -3),                                          (-1, +3),
-        #     (+0, -3), (+0, -2), (+0, -1),  (+0, +1), (+0, +2), (+0, +3),
-        #                         (+1, -1),  (+1, +1),
-        #                         (+2, -1),  (+2, +1), (+2, +2), (+2, +3)
-        # ]
         pattern: list[tuple[int, int]] = [
-            (-2, -2),           (-2, +1), (-2, +2),
-            (-1, -2),                     (-1, +2),
-            (+0, -2), (+0, -1), (+0, +1), (+0, +2),
-                      (+1, -1), (+1, +1),
-                      (+2, -1), (+2, +1), (+2, +2)
+            (-2, -3),                      (-2, +1), (-2, +2), (-2, +3),
+            (-1, -3),                                          (-1, +3),
+            (+0, -3), (+0, -2), (+0, -1),  (+0, +1), (+0, +2), (+0, +3),
+                                (+1, -1),  (+1, +1),
+                                (+2, -1),  (+2, +1), (+2, +2), (+2, +3)
         ]
 
         r: int
         c: int
         r, c = center
-        if self.cols - c < 2:
+        if self.cols - c < 4:
             return
         self.coords42 = []
         for dr, dc in pattern:
-            rr: int = r + dr
-            cc: int = c + dc
+            rr: int = r + dr - 1
+            cc: int = c + dc - 1
             if self.cell_exist(rr, cc):
                 self.coords42.append(self.matrix[rr][cc])
             else:
@@ -566,7 +695,7 @@ class Maze:
         for cell in self.coords42:
             cell.visited = True
 
-    def matrix_to_hex(self) -> list[str]:
+    def matrix_to_hex(self):
 
         hex_matrix: list[str] = []
 
@@ -589,10 +718,151 @@ class Maze:
                 f.write(str(self.exit[1]) + "," + str(self.exit[0]) + "\n")
                 f.write(directions + "\n")
 
+==> renderer.py <==
+import maze
+import os
+import random
 
-    def is_wall(self, row: int, col: int) -> bool:
 
-        if 0 <= row < self.rows and 0 <= col < self.cols:
+class Renderer:
+    """Render and interact with a maze in text mode.
+
+    Attributes:
+        ascii (bool): Whether ASCII rendering mode is enabled.
+        maze (maze.Maze): Maze instance managed by the renderer.
+    """
+
+    def __init__(self, maze_obj: maze.Maze, ascii: bool = True) -> None:
+        """Initialize renderer and generate maze layout.
+
+        Args:
+            maze_obj (maze.Maze): Maze object to render.
+            ascii (bool): Enable ASCII mode.
+
+        Returns:
+            None
+        """
+        self.ascii: bool = ascii
+        self.maze: maze.Maze = maze_obj
+        maze_obj.do_perfect()
+        if not maze_obj.perfect:
+            maze_obj.unperfect()
+
+    def newcoordX(self, row: int, col: int) -> bool:
+        """Move exit coordinate if target cell is valid.
+
+        Args:
+            row (int): Target row.
+            col (int): Target column.
+
+        Returns:
+            bool: `True` if exit was updated, else `False`.
+        """
+        if (self.maze.cell_exist(row, col) and
+           (row, col) != (self.maze.entry[0], self.maze.entry[1])):
+            self.maze.exit = (row, col)
             return True
-        cell = self.matrix[row][col]
-        return cell.walls == (Wall.N | Wall.E | Wall.S | Wall.W) or cell in self.coords42
+        return False
+
+    def newcoordE(self, row: int, col: int) -> bool:
+        """Move entry coordinate if target cell is valid.
+
+        Args:
+            row (int): Target row.
+            col (int): Target column.
+
+        Returns:
+            bool: `True` if entry was updated, else `False`.
+        """
+        if (self.maze.cell_exist(row, col) and
+           (row, col) != (self.maze.exit[0], self.maze.exit[1])):
+            self.maze.entry = (row, col)
+            return True
+        return False
+
+    def __render_ascii__(self) -> None:
+        """Run interactive ASCII render loop.
+
+        Handles keyboard commands for regeneration, path toggle,
+        entry/exit movement, and maze resizing.
+
+        Returns:
+            None
+        """
+        colors: list[str] = [
+            "\033[91m",  # Red
+            "\033[92m",  # Green
+            "\033[93m",  # Yellow
+            "\033[94m",  # Blue
+            "\033[95m",  # Magenta
+            "\033[96m",  # Cyan
+        ]
+
+        os.system("clear")
+        self.maze.draw()
+        path: bool = False
+
+        while True:
+            try:
+                cmd: str = input("[r]egen [p]ath  [c]olor [s]how [q]uit: ")
+            except EOFError:
+                break
+            except KeyboardInterrupt:
+                print()
+                break
+
+            if cmd == "q":
+                break
+            elif cmd == "r":
+                self.maze.redo()
+            elif cmd == "s":
+                self.maze.showdraw = not self.maze.showdraw
+            elif cmd == "p":
+                path = not path
+            elif cmd == '\x1b[1;2C':
+                self.newcoordX(self.maze.exit[0], self.maze.exit[1] + 1)
+            elif cmd == '\x1b[1;2D':
+                self.newcoordX(self.maze.exit[0], self.maze.exit[1] - 1)
+            elif cmd == '\x1b[1;2B':
+                self.newcoordX(self.maze.exit[0] + 1, self.maze.exit[1])
+            elif cmd == '\x1b[1;2A':
+                self.newcoordX(self.maze.exit[0] - 1, self.maze.exit[1])
+            elif cmd == '\x1b[1;5C':
+                self.newcoordE(self.maze.entry[0], self.maze.entry[1] + 1)
+            elif cmd == '\x1b[1;5D':
+                self.newcoordE(self.maze.entry[0], self.maze.entry[1] - 1)
+            elif cmd == '\x1b[1;5B':
+                self.newcoordE(self.maze.entry[0] + 1, self.maze.entry[1])
+            elif cmd == '\x1b[1;5A':
+                self.newcoordE(self.maze.entry[0] - 1, self.maze.entry[1])
+            elif cmd == '\x1b[C':
+                self.maze.cols += 1
+                self.maze.redo()
+            elif cmd == '\x1b[D':
+                self.maze.cols = max(self.maze.cols - 1, 2)
+                self.maze.redo()
+            elif cmd == '\x1b[B':
+                self.maze.rows += 1
+                self.maze.redo()
+            elif cmd == '\x1b[A':
+                self.maze.rows = max(self.maze.rows - 1, 2)
+                self.maze.redo()
+            elif cmd == "c":
+                self.maze.color = random.choice(
+                    [c for c in colors if c != self.maze.color])
+            os.system("clear")
+            if path:
+                self.maze.get_path()
+            else:
+                self.maze.draw()
+
+        print(cmd)
+
+    def render(self) -> None:
+        """Render maze using the configured backend.
+
+        Returns:
+            None
+        """
+        if True:
+            self.__render_ascii__()

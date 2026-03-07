@@ -89,10 +89,13 @@ def read_config() -> dict[str, str | int | tuple[int, int]] | None:
 
         output["SEED"] = int(output.get("SEED", "94"))
 
-        output["GRAPHIC_MODE"] = output.get("GRAPHIC_MODE", "Mlx").capitalize()
+        output["GRAPHIC_MODE"] = output.get("GRAPHIC_MODE", "Mlx")
         if output["GRAPHIC_MODE"] not in ("ASCII", "Mlx"):
             raise ValueError("Error: GRAPHIC_MODE should be ASCII | Mlx")
 
+        output["CAMERA_SPEED"] = int(output.get("CAMERA_SPEED", "32"))
+        output["CANVAS_WIDTH"] = int(output.get("CANVAS_WIDTH", "1920"))
+        output["CANVAS_HEIGHT"] = int(output.get("CANVAS_HEIGHT", "1080"))
     except ValueError as e:
         print(e)
         return None
@@ -121,7 +124,10 @@ def main() -> None:
                         perfect=cast(bool, config["PERFECT"]),
                         entry=cast(tuple[int, int], config["ENTRY"]),
                         exit=cast(tuple[int, int], config["EXIT"]),
-                        outputfile=cast(str, config["OUTPUT_FILE"]))
+                        outputfile=cast(str, config["OUTPUT_FILE"]),
+                        speed=cast(int, config["CAMERA_SPEED"]),
+                        canv_w=cast(int, config["CANVAS_WIDTH"]),
+                        canv_h=cast(int, config["CANVAS_HEIGHT"]))
 
         mz.showdraw = cast(bool, config["SHOWDRAW"])
 
