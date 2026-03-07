@@ -1,4 +1,4 @@
-from import MazeGenerator
+from code.generator.maze import MazeGenerator
 from renderer import Renderer
 import sys
 from typing import cast

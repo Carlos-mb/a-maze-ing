@@ -1,4 +1,4 @@
-import maze
+import code.mazegen.maze as maze
 import os
 import random
 import sys

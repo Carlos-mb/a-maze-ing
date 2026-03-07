@@ -14,6 +14,7 @@ try:
 except ImportError:
     mlx = None
 
+
 class Renderer:
     """Render and interact with a maze in text mode.
 
@@ -147,14 +148,20 @@ class Renderer:
                 self.maze.create()
             elif cmd == '\x1b[D':
                 self.maze.cols = max(self.maze.cols - 1,
-                                        2,
-                                       self.maze.entry[1])
+                                     2,
+                                     self.maze.entry[1] + 1,
+                                     self.maze.exit[1] + 1
+                                     )
                 self.maze.create()
             elif cmd == '\x1b[B':
                 self.maze.rows += 1
                 self.maze.create()
             elif cmd == '\x1b[A':
-                self.maze.rows = max(self.maze.rows - 1, 2)
+                self.maze.rows = max(self.maze.rows - 1,
+                                     2,
+                                     self.maze.entry[0] + 1,
+                                     self.maze.exit[0] + 1
+                                     )                                      
                 self.maze.create()
             elif cmd == "c":
                 self.maze.color = random.choice(
