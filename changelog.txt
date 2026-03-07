@@ -2,15 +2,10 @@
   el maze antes de usarlo
 - maze.redo ya no crea un nuevo Random, eso debe hacerse desde fuera del maze, 
   asignando maze.rnd a otro Random
-- do_perfect cambia las coordenadas del centro en (-1, -1) para facilitar que 
-  el 42 aparezca en laberintos de 5x5, pegado a la izq.
 ----------------
-- maze.py  →  maze_generator.py
-- Maze -> MazeGenerator
 - maze -> Añadidos valores por defecto a rows y cols 
 - Adaptado renderer a este cambio
-- Solucionado bug al encoger tamaño del lab cuando entry o exit se quedaban fuera
-- README.md 
+- README.md creado
 ---------------------
 Creado el módulo:
 - /mazegen
@@ -22,13 +17,9 @@ Creado el módulo:
 - maze ya no hace draw. 
   Ahora es una función "Callable" pasada por parámetro a MazeGenerator para
   que pueda hacer draw cuando dibuja el mapa o busca el path
-- Quitado .gitignore de .gitignore
+- Quitado .gitignore de .gitignore porque el PDF dice que debe incluirse (confirmar)
 - No se permite crear el 42 si no se deja una fila y una col de margen. De lo
   contrario, se quedan celdas inaccesibles que vuelven loco al algoritmo.
-Faltan: 
-
-* Arreglarar export_file para que funcioen fuera de MazeGenerator
-* getpath tiene un draw ¿Hay que quitarlo?
 
 Hay que quitar de MazeGenerator las referencias a la visuacización:
         self.speed: int = speed
@@ -38,13 +29,11 @@ Hay que quitar de MazeGenerator las referencias a la visuacización:
 
 - Si Entrada y salida son las mismas, no hay path que generar en el fichero
   ¿Lo impedimos dando un error al cargar la configuración?
-- Instrucciones para poder usar el entorno gráfico ¿Qué instalar?
-- Intrucciones generales para usar el módulo MazeGenerator
+
 - Revisar README, han cambiado cosas del código y seguro que algo más
+  - Instrucciones para poder usar el entorno gráfico ¿Qué instalar?
+  - Intrucciones generales para usar el módulo MazeGenerator
+
 - Revisar Makefile (no está actualizado ni probado)
-- Cambiar estructura de directorios para dejar el repo definitivo
-- El renderer no exporta el fichero del laberinto regenerado. Si quieremos que
-  lo haga, tendremos que enviarle la función de exportación como Callable
 
 - Flake8, mypy y DocStrings 
-- Añadir al README.md la información sobre el módulo: pag 13 del PDF
