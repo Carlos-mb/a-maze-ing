@@ -36,9 +36,15 @@ Hay que quitar de MazeGenerator las referencias a la visuacización:
         self.canv_h: int = canv_h
   deben estar en el renderer
 
-Entrada y salida no pueden ser las mismas
-Instrucciones para poder usar el entorno gráfico
-Intrucciones generales de usarlo
-Revisar README, han cambiado cosas del código y seguro que algo más
-Revisar Makefile (no está actualizado ni probado)
-Cambiar estructura de directorios para dejar el repo definitivo
+- Si Entrada y salida son las mismas, no hay path que generar en el fichero
+  ¿Lo impedimos dando un error al cargar la configuración?
+- Instrucciones para poder usar el entorno gráfico ¿Qué instalar?
+- Intrucciones generales para usar el módulo MazeGenerator
+- Revisar README, han cambiado cosas del código y seguro que algo más
+- Revisar Makefile (no está actualizado ni probado)
+- Cambiar estructura de directorios para dejar el repo definitivo
+- El renderer no exporta el fichero del laberinto regenerado. Si quieremos que
+  lo haga, tendremos que enviarle la función de exportación como Callable
+
+- Flake8, mypy y DocStrings 
+- Añadir al README.md la información sobre el módulo: pag 13 del PDF

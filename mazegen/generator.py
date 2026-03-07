@@ -17,8 +17,7 @@ Access structure:
 
 from enum import IntFlag
 import random
-import os
-import time
+
 import collections
 from typing import Callable
 
@@ -203,7 +202,8 @@ class MazeGenerator:
             seed (int): RNG seed.
             perfect (bool): Whether maze remains perfect.
             entry (tuple[int, int]): Entry coordinate.
-            exit (tuple[int, int] | None): Exit coordinate or default bottom-right.
+            exit (tuple[int, int] | None): Exit coordinate or
+                                            default bottom-right.
 
         Returns:
             None
@@ -357,7 +357,7 @@ class MazeGenerator:
             self._tunnel(self.rnd.choice(pendings))
             pendings = self._pending_neighbors()
 
-    def generate(self) -> None:
+    def generate(self) -> MazeGenerator:
         """Regenerate maze with current dimensions/options.
 
         Returns:
@@ -371,6 +371,8 @@ class MazeGenerator:
         self._do_perfect()
         if not self.perfect:
             self._unperfect()
+
+        return self
 
     def solve(self) -> None:
         """Calculate shortest path from entry to exit.
@@ -389,6 +391,8 @@ class MazeGenerator:
 
         queue.append(current)
         current.visited = True
+        if current == self.matrix[self.exit[0]][self.exit[1]]:
+            queue.clear()
 
         while queue:
             if self.showdraw:
@@ -515,4 +519,5 @@ class MazeGenerator:
         if 0 <= row < self.rows and 0 <= col < self.cols:
             return True
         cell = self.matrix[row][col]
-        return cell.walls == (Wall.N | Wall.E | Wall.S | Wall.W) or cell in self.coords42
+        return cell.walls == (Wall.N | Wall.E | Wall.S | Wall.W) or\
+            cell in self.coords42

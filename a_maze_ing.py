@@ -1,8 +1,7 @@
-from mazegen.generator import MazeGenerator, Cell, Wall
+from mazegen import MazeGenerator
 from renderer import Renderer
 import sys
 from typing import cast
-import os
 
 
 def read_config() -> dict[str, str | int | tuple[int, int]] | None:
@@ -110,7 +109,7 @@ def export_file(maze: MazeGenerator, outputfile: str) -> None:
 
     directions = maze.directions
 
-    if not maze or directions == "":
+    if not maze:  # or directions == ""
         return
 
     hex_matrix: list[str] = []
@@ -122,8 +121,8 @@ def export_file(maze: MazeGenerator, outputfile: str) -> None:
 
     if outputfile != "":
         with open(outputfile, "w") as f:
-            for row in hex_matrix:
-                f.write(row + "\n")
+            for row2 in hex_matrix:
+                f.write(row2 + "\n")
             f.write("\n")
             f.write(str(maze.entry[1]) + "," + str(maze.entry[0]) + "\n")
             f.write(str(maze.exit[1]) + "," + str(maze.exit[0]) + "\n")
@@ -162,6 +161,8 @@ def main() -> None:
                                     ascii=is_ascii,
                                     showdraw=cast(bool, config["SHOWDRAW"]))
         filename: str = cast(str, config["OUTPUT_FILE"])
+        mz.generate()
+        mz.solve()
         export_file(mz, filename)
         # if os.path.exists(filename):
         #     print("File created: "+filename)

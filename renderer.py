@@ -2,7 +2,7 @@ from mazegen.generator import MazeGenerator, Cell, Wall
 import os
 import random
 import sys
-from typing import Any, Callable
+from typing import Any
 import time
 
 """
@@ -49,7 +49,7 @@ class Renderer:
         self.t_start: Any = None
         self.t_end: Any = None
 
-        self.cam_x = 0 
+        self.cam_x = 0
         self.cam_y = 0
         self.win_w = self.maze.canv_w
         self.win_h = self.maze.canv_h
@@ -153,7 +153,6 @@ class Renderer:
                 line += "╝"
         print(line + color_reset)
         time.sleep(0.1)
-
 
     def newcoordX(self, row: int, col: int) -> bool:
         """Move exit coordinate if target cell is valid.
@@ -266,14 +265,15 @@ class Renderer:
                                      2,
                                      self.maze.entry[0] + 1,
                                      self.maze.exit[0] + 1
-                                     )                                      
+                                     )
                 self.maze.generate()
             elif cmd == "c":
                 self.color = random.choice(
                     [c for c in colors if c != self.color])
             os.system("clear")
-            if path:
-                self.maze.solve()
+            self.maze.solve()
+            self.
+            if path:                
                 self.draw(path=self.maze.shortest_path)
             else:
                 self.draw()
@@ -318,7 +318,7 @@ class Renderer:
         for r in range(start_row, end_row):
             for c in range(start_col, end_col):
                 cell = self.maze.matrix[r][c]
-                
+
                 # POSICIÓN RELATIVA A LA CÁMARA
                 x = c * TILE_SIZE - self.cam_x
                 y = r * TILE_SIZE - self.cam_y
@@ -328,7 +328,7 @@ class Renderer:
                     img = self.t_42
                 else:
                     img = self.wall_sprites.get(int(cell.walls))
-                
+
                 if img:
                     self.mlx_core.mlx_put_image_to_window(self.mlx_ptr, self.win_ptr, img, x, y)
 
@@ -347,7 +347,7 @@ class Renderer:
 
         self.mlx_core = mlx.Mlx()
         self.mlx_ptr = self.mlx_core.mlx_init()
-        
+
         self.load_resources()
 
         win_width = min(self.maze.cols * 64, self.maze.canv_w)
@@ -355,12 +355,12 @@ class Renderer:
         self.win_ptr = self.mlx_core.mlx_new_window(self.mlx_ptr, win_width, win_height, "A_Maze_Ing MLX")
 
         def key_hook(keycode: int, param: Any) -> None:
-            
+
             speed = self.maze.speed
 
             if keycode in (65307, 53, 113): 
                 os._exit(0)
-            
+
             elif keycode == 114:  # [R]egen
                 self.maze.generate()
                 self.maze.shortest_path = []
@@ -373,7 +373,7 @@ class Renderer:
                     self.maze.solve()
                 else:
                     self.maze.shortest_path = []
-        
+
             elif keycode == 65361:  # Left
                 self.cam_x -= speed
             elif keycode == 65363:  # Right
@@ -385,7 +385,8 @@ class Renderer:
 
             self.draw_maze_mlx()
 
-        self.mlx_core.mlx_hook(self.win_ptr, 33, 0, lambda *a: os._exit(0), None)
+        self.mlx_core.mlx_hook(self.win_ptr, 33, 0,
+                               lambda *a: os._exit(0), None)
         self.mlx_core.mlx_hook(self.win_ptr, 2, 1, key_hook, None)
 
         self.draw_maze_mlx()
